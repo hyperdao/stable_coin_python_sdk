@@ -1,8 +1,7 @@
-from hx_wallet_api import HXWalletApi
+# encoding: utf-8
 
 class PriceFeeder:
     def __init__(self, account, contract, wallet_api):
-        HXWalletApi.__init__("PriceFeeder")
         self.account = account
         self.contract = contract
         self.wallet_api = wallet_api
@@ -25,10 +24,10 @@ class PriceFeeder:
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'feed_price', strPrice])
 
     # offline APIs
-    def owner(self):
+    def get_owner(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "owner", ""])
 
-    def state(self):
+    def get_state(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "state", ""])
 
     def get_price(self):
@@ -37,7 +36,7 @@ class PriceFeeder:
     def get_feeders(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "feeders", ""])
 
-    def getAnnualStabilityFeeHistory(self):
+    def get_annual_stability_fee_history(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getAnnualStabilityFeeHistory", ""])
 
     def get_base_asset(self):
