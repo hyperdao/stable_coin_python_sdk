@@ -5,28 +5,28 @@ import base64
 
 
 class HXWalletApi:
-    HTTP_RPC_USER = 'user'
-    HTTP_RPC_PASSWORD = 'password'
-    HTTP_RPC_URL = 'http://localhost:50321/'
-
-    def __init__(self, name):
+    def __init__(self, name, rpc_user='user', rpc_password='password', rpc_url='http://localhost:50321/'):
         self.name = name
+        self.rpc_user = rpc_user
+        self.rpc_password = rpc_password
+        self.rpc_url = rpc_url
 
     def rpc_request(self, method, args):
-        basic_auth = "Basic " + base64.b64encode("%s:%s" % (HXWalletApi.HTTP_RPC_USER, HXWalletApi.HTTP_RPC_PASSWORD))
+        auth_str = "%s:%s" % (self.rpc_user, self.rpc_password)
+        basic_auth = "Basic " + str(base64.b64encode(auth_str.encode('utf-8')))
         args_j = json.dumps(args)
         payload =  "{\r\n \"id\": 1,\r\n \"method\": \"%s\",\r\n \"params\": %s\r\n}" % (method, args_j)
         headers = {
             'User-Agent': 'Web Client',
             'Content-Type': 'application/json',
-            # 'Authorization': basic_auth,
+            'Authorization': basic_auth,
             'cache-control': "no-cache",
         }
         count = 0
         while True:
             try:
                 logging.info("payload: %s" % payload)
-                response = requests.request("POST", url=HXWalletApi.HTTP_RPC_URL, data=payload, headers=headers)
+                response = requests.request("POST", url=self.rpc_url, data=payload, headers=headers)
                 try:
                     rep = response.json()
                 except Exception as ex:
