@@ -16,24 +16,24 @@ class TestPriceFeeder():
     def test_get_owner(self):
         pf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
         owner = pf.get_owner()
-        assert(owner['result'] == 'HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W')
+        assert(owner == 'HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W')
 
     def test_get_state(self):
         pf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
         owner = pf.get_state()
-        assert(owner['result'] == 'COMMON')
+        assert(owner == 'COMMON')
 
     def test_get_price(self):
         pf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
         owner = pf.get_price()
-        assert(owner['result'] == '2.5')
+        assert(owner == '2.5')
 
     def test_get_base_asset(self):
         pf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
         owner = pf.get_base_asset()
-        assert(owner['result'] == 'BTC')
+        assert(owner == 'BTC')
 
     def test_get_quote_asset(self):
         pf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
         owner = pf.get_quote_asset()
-        assert(owner['result'] == 'HXCcuGJV3cVnwMPk4S524ADcC9PWxRA3qKR2')
+        assert(owner == 'HXCcuGJV3cVnwMPk4S524ADcC9PWxRA3qKR2')

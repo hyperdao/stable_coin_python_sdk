@@ -1,18 +1,15 @@
 import json
-from hx_wallet_api import HXWalletApi
 
 class CDCOperation:
-    def __init__(self, account, contract, wallet_api, collateralAsset):
-        HXWalletApi.__init__("PriceFeeder")
+    def __init__(self, account, contract, wallet_api):
         self.account = account
         self.contract = contract
         self.wallet_api = wallet_api
         self.asset = ""
         info = self.get_contract_info()
-        if info is not None or info.has_key('result'):
-            info = json.loads(info['result'])
-            if info['state'] == "NOT_INITED":
-                self.asset = info['collateralAsset']
+        info = json.loads(info)
+        if info is not None or (info.has_key('state') and info['state'] != "NOT_INITED"):
+            self.asset = info['collateralAsset']
     
     # online APIs
     def init_config(self, collateralAsset, collateralizationRatio,\
@@ -102,9 +99,6 @@ class CDCOperation:
     # offline APIs
     def get_contract_info(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getInfo", ""])
-
-    def get_state(self):
-        return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "state", ""])
 
     def get_cdc(self, cdc_id):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getPrice", cdc_id])

@@ -35,8 +35,8 @@ class HXWalletApi:
                     logging.warning("Not json response: %s, %s" % (ex, response.text))
                     return None
                 if "result" in rep:
-                    logging.warning(" response: %s" % (response.text))
-                    return rep
+                    logging.debug(" response: %s" % (response.text))
+                    return rep['result']
             except Exception as ex:
                 print(ex)
                 count += 1
