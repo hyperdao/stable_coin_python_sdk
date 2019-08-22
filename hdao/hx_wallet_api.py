@@ -27,16 +27,18 @@ class HXWalletApi:
         count = 0
         while True:
             try:
-                logging.debug("payload: %s" % payload)
+                logging.warning("payload: %s" % payload)
                 response = requests.request("POST", url=self.rpc_url, data=payload, headers=headers)
                 try:
                     rep = response.json()
                 except Exception as ex:
                     logging.warning("Not json response: %s, %s" % (ex, response.text))
                     return None
+                logging.warning("response: %s" % (response.text))
                 if "result" in rep:
-                    logging.debug(" response: %s" % (response.text))
                     return rep['result']
+                else:
+                    return None
             except Exception as ex:
                 print(ex)
                 count += 1
