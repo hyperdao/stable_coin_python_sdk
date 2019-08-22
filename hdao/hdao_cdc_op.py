@@ -1,15 +1,23 @@
 import json
 
 class CDCOperation:
+    collateralPrecision = {
+        'BTC': 100000000,
+        'ETH': 100000000,
+        'HX': 100000
+    }
+
     def __init__(self, account, contract, wallet_api):
         self.account = account
         self.contract = contract
         self.wallet_api = wallet_api
         self.asset = ""
+        self.precision = 100000000
         info = self.get_contract_info()
         info = json.loads(info)
         if info is not None or (info.has_key('state') and info['state'] != "NOT_INITED"):
             self.asset = info['collateralAsset']
+            self.precision = CDCOperation.collateralPrecision[self.asset]
     
     # online APIs
     def init_config(self, collateralAsset, collateralizationRatio,\
@@ -39,43 +47,70 @@ class CDCOperation:
     def open_cdc(self, collateralAmount, stableCoinAmount):
         if self.asset == "":
             return None
+        collateralAmount = int(collateralAmount * self.precision)
+        stableCoinAmount = int(stableCoinAmount * self.precision)
         if stableCoinAmount > 0:
-            open_args = "openCdc,"+str(decimal.Decimal(stableCoinAmount).quantize(Decimal('0.00000001')))
+            open_args = "openCdc,"+str(stableCoinAmount)
         else:
             open_args = ""
         return self.wallet_api.rpc_request('transfer_to_contract', [self.account, self.contract, collateralAmount, self.asset, open_args, 0.0001, 10000, True])
 
     def add_collateral(self, cdc_id, collateralAmount):
+        if self.asset == "":
+            return None
+        collateralAmount = int(collateralAmount * self.precision)
         add_args = "addCollateral,"+str(cdc_id)
         return self.wallet_api.rpc_request('transfer_to_contract', [self.account, self.contract, collateralAmount, self.asset, add_args, 0.0001, 10000, True])
 
     def generate_stable_coin(self, cdc_id, amount):
-        args = ",".join([cdc_id, str(decimal.Decimal(amount).quantize(Decimal('0.00000001')))])
+        if self.asset == "":
+            return None
+        amount = int(amount * self.precision)
+        args = ",".join([cdc_id, str(amount)])
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'expandLoan', args])
 
     def withdraw_collateral(self, cdc_id, amount):
-        args = ",".join([cdc_id, str(decimal.Decimal(amount).quantize(Decimal('0.00000001')))])
+        if self.asset == "":
+            return None
+        amount = int(amount * self.precision)
+        args = ",".join([cdc_id, str(amount)])
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'widrawCollateral', args])
 
     def transfer_cdc(self, cdc_id, addr):
+        if self.asset == "":
+            return None
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'transferCdc', ",".join([cdc_id, addr])])
 
     def pay_back(self, cdc_id, amount):
+        if self.asset == "":
+            return None
+        amount = int(amount * self.precision)
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'payBack', ",".join([cdc_id, str(amount)])])
 
     def liquidate(self, cdc_id, stableCoinAmount, assetAmount):
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'liquidate', ",".join([cdc_id, stableCoinAmount, assetAmount])])
 
     def close_cdc(self, cdc_id):
+        if self.asset == "":
+            return None
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'closeCdc', cdc_id])
 
     def set_annual_stability_fee(self, fee):
+        if self.asset == "":
+            return None
+        fee = int(fee * self.precision)
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'setAnnualStabilityFee', str(fee)])
 
     def set_liquidation_penalty(self, fee):
+        if self.asset == "":
+            return None
+        fee = int(fee * self.precision)
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'setLiquidationPenalty', str(fee)])
 
     def set_liquidation_discount(self, fee):
+        if self.asset == "":
+            return None
+        fee = int(fee * self.precision)
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'setLiquidationDiscount', str(fee)])
 
     def set_price_feeder_addr(self, addr):

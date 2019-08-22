@@ -1,4 +1,5 @@
 # encoding: utf-8
+import decimal
 
 class PriceFeeder:
     def __init__(self, account, contract, wallet_api):
@@ -20,7 +21,7 @@ class PriceFeeder:
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'change_owner', addr])
 
     def feed_price(self, price):
-        strPrice = str(decimal.Decimal(price).quantize(Decimal('0.00000001')))
+        strPrice = str(decimal.Decimal(price).quantize(decimal.Decimal('0.00000001')))
         return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'feed_price', strPrice])
 
     # offline APIs
@@ -35,9 +36,6 @@ class PriceFeeder:
 
     def get_feeders(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "feeders", ""])
-
-    def get_annual_stability_fee_history(self):
-        return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getAnnualStabilityFeeHistory", ""])
 
     def get_base_asset(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "baseAsset", ""])
