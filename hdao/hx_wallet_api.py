@@ -27,7 +27,7 @@ class HXWalletApi:
         count = 0
         while True:
             try:
-                logging.warning("payload: %s" % payload)
+                logging.debug("payload: %s" % payload)
                 response = requests.request("POST", url=self.rpc_url, data=payload, headers=headers)
                 try:
                     rep = response.json()

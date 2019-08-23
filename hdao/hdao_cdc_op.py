@@ -1,4 +1,5 @@
 import json
+import decimal
 
 class CDCOperation:
     collateralPrecision = {
@@ -47,10 +48,10 @@ class CDCOperation:
     def open_cdc(self, collateralAmount, stableCoinAmount):
         if self.asset == "":
             return None
-        collateralAmount = int(collateralAmount * self.precision)
-        stableCoinAmount = int(stableCoinAmount * self.precision)
+        collateralAmount = str(decimal.Decimal(collateralAmount).quantize(decimal.Decimal('0.00000001')))
+        stableCoinAmount = decimal.Decimal(stableCoinAmount*100000000)
         if stableCoinAmount > 0:
-            open_args = "openCdc,"+str(stableCoinAmount)
+            open_args = "openCdc,"+str(stableCoinAmount.quantize(decimal.Decimal('0')))
         else:
             open_args = ""
         return self.wallet_api.rpc_request('transfer_to_contract', [self.account, self.contract, collateralAmount, self.asset, open_args, 0.0001, 10000, True])
@@ -136,7 +137,7 @@ class CDCOperation:
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getInfo", ""])
 
     def get_cdc(self, cdc_id):
-        return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getPrice", cdc_id])
+        return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getCdc", cdc_id])
 
     def get_liquidable_info(self, cdc_id):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "getLiquidableInfo", cdc_id])
@@ -144,4 +145,8 @@ class CDCOperation:
 
 
 if __name__ == "__main__":
-    pass
+    from hx_wallet_api import HXWalletApi
+    api = HXWalletApi(name="TestHdaoEvents", rpc_url='http://192.168.1.121:30088/')
+    cdcOp = CDCOperation('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', api)
+    info = cdcOp.close_cdc('a9f361bac02cec7cf7361f4e4c00b7dc76841544')
+    print(info)
