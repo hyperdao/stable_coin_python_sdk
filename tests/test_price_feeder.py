@@ -4,12 +4,13 @@ import json
 import time
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_price_feeder import PriceFeeder
+from config import HX_TESTNET_RPC, FEEDER_CONTRACT_ID, PRICE_FEEDER, USER1
 
 
 class TestPriceFeeder():
     def setup_method(self, function):
-        self.api = HXWalletApi(name=function.__name__, rpc_url='http://192.168.1.121:30088/')
-        self.pf = PriceFeeder('senator0', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
+        self.api = HXWalletApi(name=function.__name__, rpc_url=HX_TESTNET_RPC)
+        self.pf = PriceFeeder(PRICE_FEEDER['account'], FEEDER_CONTRACT_ID, self.api)
 
     def teardown_function(self):
         self.api = None
@@ -41,25 +42,25 @@ class TestPriceFeeder():
 
     def test_change_owner(self):
         previousOwner = self.pf.get_owner()
-        assert(previousOwner == 'HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W')
-        self.pf.change_owner('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
+        assert(previousOwner == PRICE_FEEDER['address'])
+        self.pf.change_owner(USER1['address'])
         time.sleep(6)
         currentOwner = self.pf.get_owner()
-        assert(currentOwner == 'HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
-        newPf = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
+        assert(currentOwner == USER1['address'])
+        newPf = PriceFeeder(USER1['account'], USER1['address'], self.api)
         newPf.change_owner(previousOwner)
 
     def test_change_feeder(self):
         feeders = json.loads(self.pf.get_feeders())
-        assert('HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W' in feeders)
-        assert('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh' not in feeders)
-        self.pf.add_feeder('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
+        assert(PRICE_FEEDER['address'] in feeders)
+        assert(USER1['address'] not in feeders)
+        self.pf.add_feeder(USER1['address'])
         time.sleep(6)
         feeders = json.loads(self.pf.get_feeders())
-        assert('HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W' in feeders)
-        assert('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh' in feeders)
-        self.pf.remove_feeder('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
+        assert(PRICE_FEEDER['address'] in feeders)
+        assert(USER1['address'] in feeders)
+        self.pf.remove_feeder(USER1['address'])
         time.sleep(6)
         feeders = json.loads(self.pf.get_feeders())
-        assert('HXNWj42PcH3Q2gEQ9GnVV2y87qsXd8MCL85W' in feeders)
-        assert('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh' not in feeders)
+        assert(PRICE_FEEDER['address'] in feeders)
+        assert(USER1['address'] not in feeders)

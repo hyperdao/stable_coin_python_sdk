@@ -4,17 +4,18 @@ import random
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_events import EventsCollector
 from hdao.hdao_cdc_op import CDCOperation
+from config import USER1, CDC_CONTRACT_ID, HX_TESTNET_RPC
 
 
-class CDCOwner():
-    def __init__(self, account):
-        self.account = account
-        self.walletApi = HXWalletApi(name=account, rpc_url='http://192.168.1.121:30088/')
-        self.cdcOp = CDCOperation(account, 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', self.walletApi)
+# class CDCOwner():
+#     def __init__(self, account):
+#         self.account = account
+#         self.walletApi = HXWalletApi(name=account, rpc_url=HX_TESTNET_RPC)
+#         self.cdcOp = CDCOperation(account, CDC_CONTRACT_ID, self.walletApi)
 
-    def open_cdc(self):
-        collateralAmount = random.uniform(0.000001, 0.000002)
-        self.cdcOp.open_cdc(collateralAmount, collateralAmount)
+#     def open_cdc(self):
+#         collateralAmount = random.uniform(0.000001, 0.000002)
+#         self.cdcOp.open_cdc(collateralAmount, collateralAmount)
 
 
 class TestHdaoEvents():
@@ -28,9 +29,9 @@ class TestHdaoEvents():
         pass
 
     def setup_method(self, function):
-        self.api = HXWalletApi(name="TestHdaoEvents", rpc_url='http://192.168.1.121:30088/')
-        self.cdcOp = CDCOperation('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', self.api)
-        self.collector = EventsCollector('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', self.api)
+        self.api = HXWalletApi(name="TestHdaoEvents", rpc_url=HX_TESTNET_RPC)
+        self.cdcOp = CDCOperation(USER1['account'], CDC_CONTRACT_ID, self.api)
+        self.collector = EventsCollector(USER1['account'], CDC_CONTRACT_ID, self.api)
 
     def teardown_function(self):
         self.api = None
@@ -55,7 +56,7 @@ class TestHdaoEvents():
         while not confirmed:
             time.sleep(3)
             self.collector.collect_event(block_num)
-            cdcs = self.collector.query_cdc_by_address('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
+            cdcs = self.collector.query_cdc_by_address(USER1['address'])
             for c in cdcs:
                 if c.block_number > block_num:
                     confirmed = True
@@ -70,7 +71,7 @@ class TestHdaoEvents():
             while waitTimes < 10:
                 time.sleep(3)
                 self.collector.collect_event(block_num)
-                cdcs = self.collector.query_cdc_by_address('HXNYM7NT7nbNZPdHjzXf2bkDR53riKxV9kgh')
+                cdcs = self.collector.query_cdc_by_address(USER1['address'])
                 for c in cdcs:
                     if c.cdc_id == previousCdcId:
                         if c.state == 3:
