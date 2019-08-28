@@ -4,7 +4,7 @@ import random
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_events import EventsCollector
 from hdao.hdao_cdc_op import CDCOperation
-from config import USER1, CDC_CONTRACT_ID, HX_TESTNET_RPC
+from .config import USER1, CDC_CONTRACT_ID, HX_TESTNET_RPC
 
 
 # class CDCOwner():
@@ -46,6 +46,11 @@ class TestHdaoEvents():
         assert(len(cdcs) == 1)
         assert(cdcs[0].cdc_id == '0694d145b7000d8d5b13f9f4c4acbee3533ca14a')
     
+    def test_cdc_op_query(self):
+        cdcs = self.collector.query_cdc_op_by_id('ee80006bb468a434af71c38cb62e1afac6a51c52')
+        assert(len(cdcs) == 2)
+        assert(cdcs[0].cdc_id == 'ee80006bb468a434af71c38cb62e1afac6a51c52')
+
     def test_cdc_normal_operations(self):
         info = self.api.rpc_request("info", [])
         block_num = info['head_block_num']

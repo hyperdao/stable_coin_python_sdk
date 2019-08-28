@@ -22,19 +22,17 @@ class CdcTable(Base):
         return "<Cdc(cdcId='%s', collateralAmount='%s', stableTokenAmount='%s')>" % (
             self.cdc_id, self.collateral_amount, self.stable_token_amount)
 
-# class CdcOpHistoryTable(Base):
-#     __tablename__ = 'cdc_op_history'
-#     cdc_id = Column(String(128), primary_key=True, nullable=False)
-#     op = Column(String(16), nullable=False)
-#     collateral_amount = Column(String(128), nullable=False)
-#     stable_token_amount = Column(String(128), nullable=False)
-#     owner = Column(String(128), nullable=False)
-#     liquidator = Column(String(128), default="")
-#     block_number = Column(Integer, nullable=False)
+class CdcOpHistoryTable(Base):
+    __tablename__ = 'cdc_op_history'
+    cdc_id = Column(String(128), nullable=False, index=True)
+    tx_id = Column(String(128), primary_key=True, nullable=False)
+    op = Column(String(16), nullable=False)
+    op_content = Column(String(1024), nullable=False)
+    block_number = Column(Integer, nullable=False)
 
-#     def __repr__(self):
-#         return "<CdcOp(cdcId='%s', collateralAmount='%s', stableTokenAmount='%s')>" % (
-#             self.cdc_id, self.collateral_amount, self.stable_token_amount)
+    def __repr__(self):
+        return "<CdcOpHistory(cdcId='%s', op='%s', block_number='%d')>" % (
+            self.cdc_id, self.op, self.block_number)
 
 
 engine = create_engine('sqlite:///cdcs.db', echo=True)
@@ -59,6 +57,9 @@ class EventsCollector:
 
     def query_cdc_by_id(self, cdc_id):
         return self.session.query(CdcTable).filter_by(cdc_id=cdc_id).first()
+
+    def query_cdc_op_by_id(self, cdc_id):
+        return self.session.query(CdcOpHistoryTable).filter_by(cdc_id=cdc_id).all()
 
     def collect_event(self, block=1, step=100):
         start_block = int(block)
@@ -92,8 +93,17 @@ class EventsCollector:
         for obj in invoke_obj:
             for event in obj['events']: # Inited, Mint, DestoryAndTrans, ExpandLoan, AddCollateral, WidrawCollateral, PayBack
                 logging.debug('event: '+event['event_name'])
-                if event['event_name'] == 'OpenCdc':
+                if event['event_name'] in ('OpenCdc', 'TransferCdc', 'Liquidate', 'CloseCdc', 'AddCollateral', 'ExpandLoan', 'WidrawCollateral', 'PayBack'):
                     cdcInfo = json.loads(event['event_arg'])
+                    self.session.query(CdcOpHistoryTable).filter_by(tx_id=txid).delete()
+                    self.session.add(CdcOpHistoryTable(
+                        cdc_id=cdcInfo['cdcId'],
+                        tx_id=txid,
+                        op=event['event_name'],
+                        op_content=event['event_arg'],
+                        block_number=block['number']
+                    ))
+                if event['event_name'] == 'OpenCdc':
                     self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).delete()
                     self.session.add(CdcTable(
                         cdc_id=cdcInfo['cdcId'], 
@@ -102,17 +112,15 @@ class EventsCollector:
                         stable_token_amount=cdcInfo['stableTokenAmount'], 
                         state=1, block_number=block['number']))
                 elif event['event_name'] == 'TransferCdc':
-                    transferInfo = json.loads(event['event_arg'])
-                    cdc = self.session.query(CdcTable).filter_by(cdc_id=transferInfo['cdcId']).first()
+                    cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
                     if cdc is None:
-                        logging.error("Not found cdc error: "+transferInfo['cdcId'])
+                        logging.error("Not found cdc error: "+cdcInfo['cdcId'])
                     else:
-                        if cdc.owner != transferInfo['from_address']:
-                            logging.error("Not match owner error: %s(%s => %s)" % (transferInfo['cdcId'], cdc.owner, transferInfo['from_address']))
-                        cdc.owner = transferInfo['to_address']
+                        if cdc.owner != cdcInfo['from_address']:
+                            logging.error("Not match owner error: %s(%s => %s)" % (cdcInfo['cdcId'], cdc.owner, cdcInfo['from_address']))
+                        cdc.owner = cdcInfo['to_address']
                     self.session.add(cdc)
                 elif event['event_name'] == 'Liquidate':
-                    cdcInfo = json.loads(event['event_arg'])
                     cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
                     if cdc is None:
                         logging.error("Not found cdc error: "+cdcInfo['cdcId'])
@@ -121,7 +129,6 @@ class EventsCollector:
                         cdc.state = 2
                         self.session.add(cdc)
                 elif event['event_name'] == 'CloseCdc':
-                    cdcInfo = json.loads(event['event_arg'])
                     cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
                     if cdc is None:
                         logging.error("Not found cdc error: "+cdcInfo['cdcId'])
@@ -131,6 +138,7 @@ class EventsCollector:
                 else:
                     logging.info("Unprocessed event:"+event['event_name'])
                     continue
+                
         return False
 
 
