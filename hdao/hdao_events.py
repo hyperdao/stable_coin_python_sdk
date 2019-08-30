@@ -85,6 +85,7 @@ class EventsCollector:
                 tx_count += 1
         self.session.commit()
         self.session.close()
+        return start_block
     
     def _get_contract_invoke_object(self, op, txid, block):
         invoke_obj = self.walletApi.rpc_request("get_contract_invoke_object", [txid])
