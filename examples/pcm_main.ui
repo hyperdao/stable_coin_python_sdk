@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1096</width>
+    <width>983</width>
     <height>671</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>380</y>
-      <width>591</width>
+      <width>651</width>
       <height>231</height>
      </rect>
     </property>
@@ -35,13 +35,19 @@
     <property name="editTriggers">
      <set>QAbstractItemView::NoEditTriggers</set>
     </property>
+    <property name="selectionMode">
+     <enum>QAbstractItemView::SingleSelection</enum>
+    </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
    </widget>
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>371</width>
+      <width>351</width>
       <height>181</height>
      </rect>
     </property>
@@ -53,7 +59,7 @@
       <rect>
        <x>20</x>
        <y>20</y>
-       <width>331</width>
+       <width>311</width>
        <height>141</height>
       </rect>
      </property>
@@ -121,7 +127,7 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>380</x>
       <y>20</y>
       <width>421</width>
       <height>218</height>
@@ -130,7 +136,7 @@
     <property name="title">
      <string>Collateral Contract Info</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -216,8 +222,8 @@
    <widget class="QLabel" name="syncLabel">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>210</y>
+      <x>450</x>
+      <y>330</y>
       <width>54</width>
       <height>12</height>
      </rect>
@@ -242,7 +248,7 @@ border-color: black;</string>
     <property name="title">
      <string>CDC Operation</string>
     </property>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="btnOpenCdc">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -314,12 +320,16 @@ border-color: black;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1096</width>
+     <width>983</width>
      <height>23</height>
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

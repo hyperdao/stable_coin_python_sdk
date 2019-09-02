@@ -49,7 +49,7 @@ class CDCOperation:
         if self.asset == "":
             return None
         collateralAmount = str(decimal.Decimal(collateralAmount).quantize(decimal.Decimal('0.00000001')))
-        stableCoinAmount = decimal.Decimal(stableCoinAmount*100000000)
+        stableCoinAmount = decimal.Decimal(stableCoinAmount)*100000000
         if stableCoinAmount > 0:
             open_args = "openCdc,"+str(stableCoinAmount.quantize(decimal.Decimal('0')))
         else:
