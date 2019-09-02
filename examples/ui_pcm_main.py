@@ -120,12 +120,6 @@ class Ui_MainWindow(object):
         self.liquidationDiscount = QtWidgets.QLineEdit(self.layoutWidget)
         self.liquidationDiscount.setObjectName("liquidationDiscount")
         self.formLayout_3.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.liquidationDiscount)
-        self.syncLabel = QtWidgets.QLabel(self.centralwidget)
-        self.syncLabel.setGeometry(QtCore.QRect(450, 330, 54, 12))
-        self.syncLabel.setStyleSheet("border-width: 1px;border-style: solid;\n"
-"border-color: black;")
-        self.syncLabel.setText("")
-        self.syncLabel.setObjectName("syncLabel")
         self.groupBox_3 = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox_3.setGeometry(QtCore.QRect(10, 290, 421, 71))
         self.groupBox_3.setObjectName("groupBox_3")

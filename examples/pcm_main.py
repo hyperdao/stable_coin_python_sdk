@@ -158,8 +158,8 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
     
     def syncStateChange(self, stateChange):
         if stateChange['syncType'] == SYNC_STATE_TYPE:
-            self.syncLabel.setText(stateChange['data'])
-            self.syncLabel.adjustSize()
+            # self.syncLabel.setText(stateChange['data'])
+            # self.syncLabel.adjustSize()
             self.statusBar().showMessage(stateChange['data'])
         elif stateChange['syncType'] == SYNC_CONTRACT_TYPE:
             self.cdcContractInfo = stateChange['data']
