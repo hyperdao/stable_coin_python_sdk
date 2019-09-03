@@ -6,10 +6,12 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from ui_pcm_main import *
 from open_cdc import OpenCdcDialog
+from cdc_operations import CDCOperationsDialog
+from utils import convertCoinWithPrecision
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_events import EventsCollector
 from hdao.hdao_cdc_op import CDCOperation
-
+from hdao.hdao_price_feeder import PriceFeeder
 
 
 SYNC_STATE_TYPE = 'sync_state'
@@ -83,6 +85,8 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         self.api = HXWalletApi(name='PCM', rpc_url=self.default_api_url)
         self.collector = EventsCollector('da', self.collateral_contract, self.api)
         self.cdcOp = CDCOperation('da', self.collateral_contract, self.api)
+        self.priceFeeder = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
+        self.price = self.priceFeeder.get_price()
         self.scanThread = ScanThread(self.api, self.cdcOp)
         self.sinScanStop.connect(self.scanThread.stop)
         self.scanThread.sinSyncState.connect(self.syncStateChange)
@@ -92,7 +96,7 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
     def initWidgets(self):
         self.btnOpenCdc.clicked.connect(self.openCdcDialog)
         self.cdcModel = QStandardItemModel(5,6)
-        self.cdcModel.setHorizontalHeaderLabels(['cdc id','BTC','USD', 'Stability Fee', 'state', 'block number'])
+        self.cdcModel.setHorizontalHeaderLabels(['CDC ID','BTC','HUSD', 'Stability Fee', 'state', 'block number'])
         self.tableView.setModel(self.cdcModel)
         self.tableView.doubleClicked.connect(self.existedCdcAction)
         self.collateralContractList.addItem(self.collateral_contract)
@@ -101,14 +105,14 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         self.accounts = accounts if accounts is not None else None
         for a in self.accounts:
             self.accountList.addItem(a['name'])
+        # self.tableView.itemClicked.connect(self.cdcOperation)
 
     def openCdcDialog(self):
         dlg = OpenCdcDialog()
-        dlg.openCdcSignel.connect(self.openCdcAction)
+        dlg.openCdcSignal.connect(self.openCdcAction)
         dlg.exec_()
 
     def openCdcAction(self, arg):
-        print(arg)
         result = self.cdcOp.open_cdc(arg['btcAmount'], arg['usdAmount'])
         if result is not None and "trxid" in result:
             QMessageBox.information(self,"Success", "Open CDC success (%s)!" % result['trxid'])
@@ -116,8 +120,30 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self,"Error", "Open CDC fail!")
 
     def existedCdcAction(self):
-        print(self.tableView.currentIndex().row())
-        pass
+        r = self.tableView.currentIndex().row()
+        data = {
+            'cdc_id': self.cdcModel.data(self.cdcModel.index(r, 0)),
+            'state': self.cdcModel.data(self.cdcModel.index(r, 4)),
+            'available_usd': self.hUSDLineEdit.text(),
+            'price': self.price
+        }
+        dlg = CDCOperationsDialog(args=data, parent=self)
+        dlg.cdcOpSignal.connect(self.cdcTakeAction)
+        dlg.exec_()
+
+    def cdcTakeAction(self, arg):
+        print(arg)
+        if arg['action'] == 'Payback':
+            self.cdcOp.pay_back(arg['cdc_id'], arg['amount'])
+        elif arg['action'] == 'Withdraw':
+            self.cdcOp.withdraw_collateral(arg['cdc_id'], arg['amount'])
+        elif arg['action'] == 'Close':
+            self.cdcOp.close_cdc(arg['cdc_id'])
+        elif arg['action'] == 'Liquidate':
+            pass
+            # self.cdcOp.liquidate(arg['cdc_id'], arg['amount'])
+        else:
+            pass
 
     def closeEvent(self, e):
         self.sinScanStop.emit()
@@ -130,31 +156,30 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         account['balances'] = balances
         for b in account['balances']:
             if b['asset_id'] == '1.3.0':
-                hxAmount = decimal.Decimal(b['amount']) / 100000
-                self.hXLineEdit.setText(str(hxAmount.quantize(decimal.Decimal('0.00000001'))))
+                self.hXLineEdit.setText(convertCoinWithPrecision(b['amount'], 5))
             elif b['asset_id'] == '1.3.1':
-                btcAmount = decimal.Decimal(b['amount']) / 100000000
-                self.bTCLineEdit.setText(str(btcAmount.quantize(decimal.Decimal('0.00000001'))))
+                self.bTCLineEdit.setText(convertCoinWithPrecision(b['amount']))
         usdBalance = self.api.rpc_request('invoke_contract_offline', ['da', 'HXCcuGJV3cVnwMPk4S524ADcC9PWxRA3qKR2', 'balanceOf', account['addr']])
-        usdBalance = decimal.Decimal(usdBalance) / 100000000
-        self.hUSDLineEdit.setText(str(usdBalance.quantize(decimal.Decimal('0.00000001'))))
+        self.hUSDLineEdit.setText(convertCoinWithPrecision(usdBalance))
         cdcs = self.collector.query_cdc_by_address(account['addr'])
         self.cdcModel.removeRows(0, self.cdcModel.rowCount())
         for r in range(len(cdcs)):
             self.cdcModel.setItem(r, 0, QStandardItem(cdcs[r].cdc_id))
-            self.cdcModel.setItem(r, 1, QStandardItem(cdcs[r].collateral_amount))
-            self.cdcModel.setItem(r, 2, QStandardItem(cdcs[r].stable_token_amount))
+            self.cdcModel.setItem(r, 1, QStandardItem(convertCoinWithPrecision(cdcs[r].collateral_amount)))
+            self.cdcModel.setItem(r, 2, QStandardItem(convertCoinWithPrecision(cdcs[r].stable_token_amount)))
             self.cdcModel.setItem(r, 3, QStandardItem('N/A'))
             if cdcs[r].state == 1:
                 self.cdcModel.setItem(r, 4, QStandardItem('OPEN'))
                 cdcInfo = self.cdcOp.get_cdc(cdcs[r].cdc_id)
                 cdcInfo = json.loads(cdcInfo)
-                self.cdcModel.setItem(r, 3, QStandardItem(cdcInfo['stabilityFee']))
+                self.cdcModel.setItem(r, 3, QStandardItem(convertCoinWithPrecision(cdcInfo['stabilityFee'])))
             elif cdcs[r].state == 2:
                 self.cdcModel.setItem(r, 4, QStandardItem('LIQUIDATED'))
             elif cdcs[r].state == 3:
                 self.cdcModel.setItem(r, 4, QStandardItem('CLOSED'))
             self.cdcModel.setItem(r, 5, QStandardItem(str(cdcs[r].block_number)))
+        self.tableView.resizeColumnsToContents()
+        self.tableView.resizeRowsToContents()
     
     def syncStateChange(self, stateChange):
         if stateChange['syncType'] == SYNC_STATE_TYPE:
@@ -169,3 +194,5 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
             self.annualStabilityFee.setText(self.cdcContractInfo['annualStabilityFee'])
             self.liquidationPenalty.setText(self.cdcContractInfo['liquidationPenalty'])
             self.liquidationDiscount.setText(self.cdcContractInfo['liquidationDiscount'])
+            self.currentPrice.setText(self.price)
+

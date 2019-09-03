@@ -130,7 +130,7 @@
       <x>380</x>
       <y>20</y>
       <width>421</width>
-      <height>218</height>
+      <height>241</height>
      </rect>
     </property>
     <property name="title">
@@ -142,14 +142,20 @@
        <x>20</x>
        <y>20</y>
        <width>381</width>
-       <height>178</height>
+       <height>211</height>
       </rect>
      </property>
      <layout class="QFormLayout" name="formLayout_3">
+      <property name="labelAlignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Collateral Contract:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -161,6 +167,9 @@
         <property name="text">
          <string>Admin:</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
       <item row="1" column="1">
@@ -170,6 +179,9 @@
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>Collateral Asset:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -181,6 +193,9 @@
         <property name="text">
          <string>Liquidation Ratio:</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
       <item row="3" column="1">
@@ -190,6 +205,9 @@
        <widget class="QLabel" name="label_6">
         <property name="text">
          <string>Annual Stability Fee:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -201,6 +219,9 @@
         <property name="text">
          <string>Liquidation Penalty:</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
       <item row="5" column="1">
@@ -211,10 +232,26 @@
         <property name="text">
          <string>Liquidation Discount:</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
       <item row="6" column="1">
        <widget class="QLineEdit" name="liquidationDiscount"/>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLineEdit" name="currentPrice"/>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Current Price:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
