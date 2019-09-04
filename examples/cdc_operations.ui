@@ -219,15 +219,25 @@
   <widget class="QComboBox" name="cdcActionBox">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>50</x>
      <y>200</y>
-     <width>71</width>
+     <width>101</width>
      <height>22</height>
     </rect>
    </property>
    <item>
     <property name="text">
      <string>Payback</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Generate</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>AddCollateral</string>
     </property>
    </item>
    <item>

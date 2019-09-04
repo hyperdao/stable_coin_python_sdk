@@ -112,6 +112,27 @@ class EventsCollector:
                         collateral_amount=cdcInfo['collateralAmount'], 
                         stable_token_amount=cdcInfo['stableTokenAmount'], 
                         state=1, block_number=block['number']))
+                elif event['event_name'] == 'AddCollateral':
+                    cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
+                    if cdc is None:
+                        logging.error("Not found cdc error: "+cdcInfo['cdcId'])
+                    else:
+                        cdc.collateral_amount = str(int(cdc.collateral_amount) + int(cdcInfo['addAmount']))
+                    self.session.add(cdc)
+                elif event['event_name'] == 'WidrawCollateral':
+                    cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
+                    if cdc is None:
+                        logging.error("Not found cdc error: "+cdcInfo['cdcId'])
+                    else:
+                        cdc.collateral_amount = str(int(cdc.collateral_amount) - int(cdcInfo['widrawCollateralAmount']))
+                    self.session.add(cdc)
+                elif event['event_name'] == 'PayBack':
+                    cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
+                    if cdc is None:
+                        logging.error("Not found cdc error: "+cdcInfo['cdcId'])
+                    else:
+                        cdc.stable_token_amount = str(int(cdc.stable_token_amount) - int(cdcInfo['repayPrincipal']))
+                    self.session.add(cdc)
                 elif event['event_name'] == 'TransferCdc':
                     cdc = self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).first()
                     if cdc is None:

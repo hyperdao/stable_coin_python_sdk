@@ -1,6 +1,8 @@
 import sys
 import json
-import time, decimal
+import time
+import decimal
+import logging
 from PyQt5.QtCore import pyqtSignal, QThread, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -132,18 +134,21 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         dlg.exec_()
 
     def cdcTakeAction(self, arg):
-        print(arg)
+        logging.debug(arg)
         if arg['action'] == 'Payback':
-            self.cdcOp.pay_back(arg['cdc_id'], arg['amount'])
+            ret = self.cdcOp.pay_back(arg['cdc_id'], arg['amount'])
+        elif arg['action'] == 'AddCollateral':
+            ret = self.cdcOp.add_collateral(arg['cdc_id'], arg['amount'])
         elif arg['action'] == 'Withdraw':
-            self.cdcOp.withdraw_collateral(arg['cdc_id'], arg['amount'])
+            ret = self.cdcOp.withdraw_collateral(arg['cdc_id'], arg['amount'])
         elif arg['action'] == 'Close':
-            self.cdcOp.close_cdc(arg['cdc_id'])
+            ret = self.cdcOp.close_cdc(arg['cdc_id'])
         elif arg['action'] == 'Liquidate':
             pass
             # self.cdcOp.liquidate(arg['cdc_id'], arg['amount'])
         else:
             pass
+        logging.debug(ret)
 
     def closeEvent(self, e):
         self.sinScanStop.emit()
@@ -170,6 +175,7 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
             self.cdcModel.setItem(r, 3, QStandardItem('N/A'))
             if cdcs[r].state == 1:
                 self.cdcModel.setItem(r, 4, QStandardItem('OPEN'))
+                #FIXME, database is not updated. The CLOSED cdc query from chain will return None.
                 cdcInfo = self.cdcOp.get_cdc(cdcs[r].cdc_id)
                 cdcInfo = json.loads(cdcInfo)
                 self.cdcModel.setItem(r, 3, QStandardItem(convertCoinWithPrecision(cdcInfo['stabilityFee'])))

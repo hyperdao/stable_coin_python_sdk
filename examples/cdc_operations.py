@@ -34,7 +34,7 @@ class CDCOperationsDialog(QDialog, Ui_CdcOperationsDialog):
         self.cdcActionBox.currentIndexChanged.connect(self.actionChange)
 
     def actionChange(self, i):
-        if i > 1:
+        if i > 3:
             self.cdcActionArg.setEnabled(False)
         else:
             self.cdcActionArg.setEnabled(True)
