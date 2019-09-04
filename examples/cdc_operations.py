@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import Qt, pyqtSignal
 import decimal
 import json
+import logging
 from ui_cdc_operations import *
 from utils import convertCoinWithPrecision
 
@@ -22,7 +23,6 @@ class CDCOperationsDialog(QDialog, Ui_CdcOperationsDialog):
             self.cdcActionBox.setEnabled(False)
             self.cdcActionArg.setEnabled(False)
         if cdcInfo is not None and cdcInfo != "{}":
-            print(cdcInfo)
             cdcInfo = json.loads(cdcInfo)
             self.collateralBox.setText(convertCoinWithPrecision(cdcInfo['collateralAmount']))
             self.generatedBox.setText(convertCoinWithPrecision(cdcInfo['stableTokenAmount']))
@@ -32,6 +32,10 @@ class CDCOperationsDialog(QDialog, Ui_CdcOperationsDialog):
             ratio = collateralAsset / debtAsset
             self.ratioBox.setText("{0:.4f}".format(ratio))
         self.cdcActionBox.currentIndexChanged.connect(self.actionChange)
+        logging.debug(args['action'])
+        self.cdcActionBox.setCurrentIndex(args['action'])
+        self.lblHint.setText('Available USD: %s' % args['available_usd'])
+        self.lblHint.setStyleSheet('color: blue;')
 
     def actionChange(self, i):
         if i > 3:

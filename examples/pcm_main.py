@@ -100,7 +100,13 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         self.cdcModel = QStandardItemModel(5,6)
         self.cdcModel.setHorizontalHeaderLabels(['CDC ID','BTC','HUSD', 'Stability Fee', 'state', 'block number'])
         self.tableView.setModel(self.cdcModel)
-        self.tableView.doubleClicked.connect(self.existedCdcAction)
+        self.tableView.doubleClicked.connect(lambda: self.existedCdcAction(0))
+        self.btnPayback.clicked.connect(lambda: self.existedCdcAction(0))#'Payback'
+        self.btnGenerate.clicked.connect(lambda: self.existedCdcAction(1))#'Generate'
+        self.btnAdd.clicked.connect(lambda: self.existedCdcAction(2))#'AddCollateral'
+        self.btnWithdraw.clicked.connect(lambda: self.existedCdcAction(3))#'Withdraw'
+        self.btnCloseCdc.clicked.connect(lambda: self.existedCdcAction(4))#'Close'
+        self.btnLiquidate.clicked.connect(lambda: self.existedCdcAction(5))#'Liquidate'
         self.collateralContractList.addItem(self.collateral_contract)
         self.accountList.currentIndexChanged.connect(self.accountChange)
         accounts = self.api.rpc_request('list_my_accounts', [])
@@ -121,14 +127,16 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         else:
             QMessageBox.warning(self,"Error", "Open CDC fail!")
 
-    def existedCdcAction(self):
+    def existedCdcAction(self, action=0):
         r = self.tableView.currentIndex().row()
         data = {
             'cdc_id': self.cdcModel.data(self.cdcModel.index(r, 0)),
             'state': self.cdcModel.data(self.cdcModel.index(r, 4)),
             'available_usd': self.hUSDLineEdit.text(),
-            'price': self.price
+            'price': self.price,
+            'action': action
         }
+        logging.debug(str(data))
         dlg = CDCOperationsDialog(args=data, parent=self)
         dlg.cdcOpSignal.connect(self.cdcTakeAction)
         dlg.exec_()

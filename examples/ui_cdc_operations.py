@@ -91,6 +91,11 @@ class Ui_CdcOperationsDialog(object):
         self.ratioBox.setGeometry(QtCore.QRect(160, 230, 133, 20))
         self.ratioBox.setReadOnly(True)
         self.ratioBox.setObjectName("ratioBox")
+        self.lblHint = QtWidgets.QLabel(CdcOperationsDialog)
+        self.lblHint.setGeometry(QtCore.QRect(70, 20, 301, 20))
+        self.lblHint.setText("")
+        self.lblHint.setAlignment(QtCore.Qt.AlignCenter)
+        self.lblHint.setObjectName("lblHint")
 
         self.retranslateUi(CdcOperationsDialog)
         self.buttonBox.accepted.connect(CdcOperationsDialog.accept)
