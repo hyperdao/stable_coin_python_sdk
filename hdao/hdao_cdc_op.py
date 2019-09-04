@@ -1,5 +1,6 @@
 import json
 import decimal
+from .utils import convertCoinWithPrecision
 
 class CDCOperation:
     collateralPrecision = {
@@ -48,7 +49,7 @@ class CDCOperation:
     def open_cdc(self, collateralAmount, stableCoinAmount):
         if self.asset == "":
             return None
-        collateralAmount = str(decimal.Decimal(collateralAmount).quantize(decimal.Decimal('0.00000001')))
+        collateralAmount = convertCoinWithPrecision(collateralAmount, 1)
         stableCoinAmount = decimal.Decimal(stableCoinAmount)*100000000
         if stableCoinAmount > 0:
             open_args = "openCdc,"+str(stableCoinAmount.quantize(decimal.Decimal('0')))
@@ -59,7 +60,7 @@ class CDCOperation:
     def add_collateral(self, cdc_id, collateralAmount):
         if self.asset == "":
             return None
-        collateralAmount = int(collateralAmount * self.precision)
+        collateralAmount = convertCoinWithPrecision(collateralAmount, 1)
         add_args = "addCollateral,"+str(cdc_id)
         return self.wallet_api.rpc_request('transfer_to_contract', [self.account, self.contract, collateralAmount, self.asset, add_args, 0.0001, 10000, True])
 
