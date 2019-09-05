@@ -100,6 +100,8 @@ class CDCOperation:
             ",".join([cdc_id, str(amount)])])
 
     def liquidate(self, cdc_id, stableCoinAmount, assetAmount):
+        stableCoinAmount = (decimal.Decimal(stableCoinAmount) * self.precision).quantize(decimal.Decimal('0'))
+        assetAmount = (decimal.Decimal(assetAmount) * self.precision).quantize(decimal.Decimal('0'))
         return self.wallet_api.rpc_request('invoke_contract', [
             self.account, 0.0001, 10000, 
             self.contract, 'liquidate', 
