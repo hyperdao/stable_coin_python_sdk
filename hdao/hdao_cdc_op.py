@@ -105,7 +105,7 @@ class CDCOperation:
         return self.wallet_api.rpc_request('invoke_contract', [
             self.account, 0.0001, 10000, 
             self.contract, 'liquidate', 
-            ",".join([cdc_id, stableCoinAmount, assetAmount])])
+            ",".join([cdc_id, convertCoinWithPrecision(stableCoinAmount, 0), convertCoinWithPrecision(assetAmount, 0)])])
 
     def close_cdc(self, cdc_id):
         if self.asset == "":
