@@ -104,6 +104,9 @@ class EventsCollector:
                         op_content=event['event_arg'],
                         block_number=block['number']
                     ))
+                else:
+                    logging.info("Unprocessed event:"+event['event_name'])
+                    continue
                 if event['event_name'] == 'OpenCdc':
                     self.session.query(CdcTable).filter_by(cdc_id=cdcInfo['cdcId']).delete()
                     self.session.add(CdcTable(
@@ -164,15 +167,12 @@ class EventsCollector:
                     else:
                         cdc.state = 3
                         self.session.add(cdc)
-                else:
-                    logging.info("Unprocessed event:"+event['event_name'])
-                    continue
-                
         return False
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')
     from hx_wallet_api import HXWalletApi
     api = HXWalletApi(name='events', rpc_url='http://192.168.1.121:30088/')
     collector = EventsCollector('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', api)
-    collector.collect_event(1290000, 100000)
+    collector.collect_event(1411286, 100000)
