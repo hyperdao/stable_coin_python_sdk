@@ -20,7 +20,7 @@ SYNC_STATE_TYPE = 'sync_state'
 SYNC_ACCOUNT_TYPE = 'sync_account'
 SYNC_CONTRACT_TYPE = 'sync_contract'
 
-class ScanThread(QThread):
+class DataSyncThread(QThread):
     sinSyncState = pyqtSignal(dict)
 
     def __init__(self, api, cdcOp):
@@ -82,20 +82,24 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         super(PcmMainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self.default_api_url = 'http://192.168.1.121:30088/'
+        self.default_api_url = self.walletUrlBox.currentText()
         self.collateral_contract = 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks'
         self.api = HXWalletApi(name='PCM', rpc_url=self.default_api_url)
         self.collector = EventsCollector('da', self.collateral_contract, self.api)
         self.cdcOp = CDCOperation('da', self.collateral_contract, self.api)
-        self.priceFeeder = PriceFeeder('da', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
-        self.price = self.priceFeeder.get_price()
-        self.scanThread = ScanThread(self.api, self.cdcOp)
-        self.sinScanStop.connect(self.scanThread.stop)
-        self.scanThread.sinSyncState.connect(self.syncStateChange)
-        self.scanThread.start()
+        self.priceFeeder = PriceFeeder('senator0', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
+        self.syncThread = DataSyncThread(self.api, self.cdcOp)
+        self.sinScanStop.connect(self.syncThread.stop)
+        self.syncThread.sinSyncState.connect(self.syncStateChange)
+        self.syncThread.start()
         self.initWidgets()
 
     def initWidgets(self):
+        self.btnChangeRatio.clicked.connect(lambda: self.cdcManagementAction(0))
+        self.btnChangeFee.clicked.connect(lambda: self.cdcManagementAction(1))
+        self.btnChangePenalty.clicked.connect(lambda: self.cdcManagementAction(2))
+        self.btnChangeDiscount.clicked.connect(lambda: self.cdcManagementAction(3))
+        self.btnChangePrice.clicked.connect(lambda: self.cdcManagementAction(4))
         self.btnOpenCdc.clicked.connect(self.openCdcDialog)
         self.cdcModel = QStandardItemModel(5,6)
         self.cdcModel.setHorizontalHeaderLabels(['CDC ID','BTC','HUSD', 'Stability Fee', 'state', 'block number'])
@@ -105,8 +109,8 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         self.btnGenerate.clicked.connect(lambda: self.existedCdcAction(1))#'Generate'
         self.btnAdd.clicked.connect(lambda: self.existedCdcAction(2))#'AddCollateral'
         self.btnWithdraw.clicked.connect(lambda: self.existedCdcAction(3))#'Withdraw'
-        self.btnCloseCdc.clicked.connect(lambda: self.existedCdcAction(4))#'Close'
-        self.btnLiquidate.clicked.connect(lambda: self.existedCdcAction(5))#'Liquidate'
+        self.btnLiquidate.clicked.connect(lambda: self.existedCdcAction(4))#'Liquidate'
+        self.btnCloseCdc.clicked.connect(lambda: self.existedCdcAction(5))#'Close'
         self.collateralContractList.addItem(self.collateral_contract)
         self.accountList.currentIndexChanged.connect(self.accountChange)
         accounts = self.api.rpc_request('list_my_accounts', [])
@@ -114,6 +118,29 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         for a in self.accounts:
             self.accountList.addItem(a['name'])
         # self.tableView.itemClicked.connect(self.cdcOperation)
+
+    def cdcManagementAction(self, op):
+        if op == 0:
+            logging.debug('btnChangeRatio clicked')
+            adminOp = CDCOperation('senator0', self.collateral_contract, self.api)
+            adminOp.set_liquidation_ratio(self.liquidationRatio.text())
+        elif op == 1:
+            logging.debug('btnChangeFee clicked')
+            adminOp = CDCOperation('senator0', self.collateral_contract, self.api)
+            adminOp.set_annual_stability_fee(self.annualStabilityFee.text())
+        elif op == 2:
+            logging.debug('btnChangePenalty clicked')
+            adminOp = CDCOperation('senator0', self.collateral_contract, self.api)
+            adminOp.set_liquidation_penalty(self.liquidationPenalty.text())
+        elif op == 3:
+            logging.debug('btnChangeDiscount clicked')
+            adminOp = CDCOperation('senator0', self.collateral_contract, self.api)
+            adminOp.set_liquidation_discount(self.liquidationDiscount.text())
+        elif op == 4:
+            logging.debug('btnChangePrice clicked')
+            self.priceFeeder.feed_price(self.currentPrice.text())
+        else:
+            logging.warning('unknown button is clicked')
 
     def openCdcDialog(self):
         dlg = OpenCdcDialog()
@@ -129,12 +156,23 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
 
     def existedCdcAction(self, action=0):
         r = self.tableView.currentIndex().row()
+        if r < 0:
+            QMessageBox.information(self, 'Info', 'Please select a CDC')
+            return
+        liquidate = None
+        liquidateInfo = self.cdcOp.get_liquidable_info(self.cdcModel.data(self.cdcModel.index(r, 0)))
+        liquidateInfo = json.loads(liquidateInfo)
+        if action == 4 and (not liquidateInfo['isNeedLiquidation'] or liquidateInfo['isBadDebt']):
+            QMessageBox.information(self, 'Info', 'The CDC (ID: %s) cannot be liquidated.' % self.cdcModel.data(self.cdcModel.index(r, 0)))
+            return
         data = {
             'cdc_id': self.cdcModel.data(self.cdcModel.index(r, 0)),
             'state': self.cdcModel.data(self.cdcModel.index(r, 4)),
             'available_usd': self.hUSDLineEdit.text(),
-            'price': self.price,
-            'action': action
+            'available_btc': self.bTCLineEdit.text(),
+            'price': self.currentPrice.text(),
+            'action': action,
+            'liquidate': liquidateInfo
         }
         logging.debug(str(data))
         dlg = CDCOperationsDialog(args=data, parent=self)
@@ -143,8 +181,11 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
 
     def cdcTakeAction(self, arg):
         logging.debug(arg)
+        ret = ''
         if arg['action'] == 'Payback':
             ret = self.cdcOp.pay_back(arg['cdc_id'], arg['amount'])
+        elif arg['action'] == 'Generate':
+            ret = self.cdcOp.generate_stable_coin(arg['cdc_id'], arg['amount'])
         elif arg['action'] == 'AddCollateral':
             ret = self.cdcOp.add_collateral(arg['cdc_id'], arg['amount'])
         elif arg['action'] == 'Withdraw':
@@ -152,15 +193,14 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         elif arg['action'] == 'Close':
             ret = self.cdcOp.close_cdc(arg['cdc_id'])
         elif arg['action'] == 'Liquidate':
-            pass
-            # self.cdcOp.liquidate(arg['cdc_id'], arg['amount'])
+            self.cdcOp.liquidate(arg['cdc_id'], arg['amount'], arg['amount2'])
         else:
             pass
         logging.debug(ret)
 
     def closeEvent(self, e):
         self.sinScanStop.emit()
-        self.scanThread.wait()
+        self.syncThread.wait()
 
     def accountChange(self, i):
         account = self.accounts[i]
@@ -208,5 +248,5 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
             self.annualStabilityFee.setText(self.cdcContractInfo['annualStabilityFee'])
             self.liquidationPenalty.setText(self.cdcContractInfo['liquidationPenalty'])
             self.liquidationDiscount.setText(self.cdcContractInfo['liquidationDiscount'])
-            self.currentPrice.setText(self.price)
+            self.currentPrice.setText(self.priceFeeder.get_price())
 
