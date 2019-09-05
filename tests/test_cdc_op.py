@@ -1,7 +1,7 @@
 import pytest
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_cdc_op import CDCOperation
-from config import USER1, CDC_CONTRACT_ID, HX_TESTNET_RPC
+from .config import USER1, CDC_CONTRACT_ID, HX_TESTNET_RPC
 
 
 class TestCdcOp():
