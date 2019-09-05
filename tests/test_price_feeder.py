@@ -4,7 +4,7 @@ import json
 import time
 from hdao.hx_wallet_api import HXWalletApi
 from hdao.hdao_price_feeder import PriceFeeder
-from config import HX_TESTNET_RPC, FEEDER_CONTRACT_ID, PRICE_FEEDER, USER1
+from .config import HX_TESTNET_RPC, FEEDER_CONTRACT_ID, PRICE_FEEDER, USER1
 
 
 class TestPriceFeeder():
