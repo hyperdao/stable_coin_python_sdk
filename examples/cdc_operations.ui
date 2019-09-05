@@ -247,12 +247,12 @@
    </item>
    <item>
     <property name="text">
-     <string>Close</string>
+     <string>Liquidate</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>Liquidate</string>
+     <string>Close</string>
     </property>
    </item>
   </widget>
@@ -267,6 +267,9 @@
      <width>133</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="inputMethodHints">
+    <set>Qt::ImhNone</set>
    </property>
    <property name="readOnly">
     <bool>false</bool>
@@ -315,6 +318,25 @@
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="cdcActionArg2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>200</y>
+     <width>133</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="inputMethodHints">
+    <set>Qt::ImhNone</set>
+   </property>
+   <property name="readOnly">
+    <bool>false</bool>
    </property>
   </widget>
  </widget>
