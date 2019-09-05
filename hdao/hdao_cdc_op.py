@@ -116,23 +116,34 @@ class CDCOperation:
     def set_annual_stability_fee(self, fee):
         if self.asset == "":
             return None
-        fee = int(fee * self.precision)
-        return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'setAnnualStabilityFee', str(fee)])
+        return self.wallet_api.rpc_request('invoke_contract', [
+            self.account, 0.0001, 10000, 
+            self.contract, 'setAnnualStabilityFee', 
+            fee])
+
+    def set_liquidation_ratio(self, ratio):
+        if self.asset == "":
+            return None
+        return self.wallet_api.rpc_request('invoke_contract', [
+            self.account, 0.0001, 10000, 
+            self.contract, 'setLiquidationRatio', 
+            ratio])
 
     def set_liquidation_penalty(self, fee):
         if self.asset == "":
             return None
-        fee = int(fee * self.precision)
-        return self.wallet_api.rpc_request('invoke_contract', [self.account, 0.0001, 10000, self.contract, 'setLiquidationPenalty', str(fee)])
+        return self.wallet_api.rpc_request('invoke_contract', [
+            self.account, 0.0001, 10000, 
+            self.contract, 'setLiquidationPenalty', 
+            fee])
 
     def set_liquidation_discount(self, fee):
         if self.asset == "":
             return None
-        fee = int(fee * self.precision)
         return self.wallet_api.rpc_request('invoke_contract', [
             self.account, 0.0001, 10000, 
             self.contract, 'setLiquidationDiscount', 
-            str(fee)])
+            fee])
 
     def set_price_feeder_addr(self, addr):
         return self.wallet_api.rpc_request('invoke_contract', [
