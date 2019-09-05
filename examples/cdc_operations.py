@@ -20,9 +20,6 @@ class CDCOperationsDialog(QDialog, Ui_CdcOperationsDialog):
         self.cdcIdBox.setText(args['cdc_id'])
         cdcInfo = parent.cdcOp.get_cdc(args['cdc_id'])
         self.stateBox.setText(args['state'])
-        if args['state'] == 'CLOSED' or args['state'] == 'LIQUIDATED':
-            self.cdcActionBox.setEnabled(False)
-            self.cdcActionArg.setEnabled(False)
         if cdcInfo is not None and cdcInfo != "{}":
             cdcInfo = json.loads(cdcInfo)
             self.collateralBox.setText(convertCoinWithPrecision(cdcInfo['collateralAmount']))
@@ -34,8 +31,12 @@ class CDCOperationsDialog(QDialog, Ui_CdcOperationsDialog):
             self.ratioBox.setText("{0:.4f}".format(ratio))
         self.cdcActionArg.setValidator(QDoubleValidator())
         self.cdcActionArg2.setVisible(False)
-        self.cdcActionBox.currentIndexChanged.connect(self.actionChange)
-        self.cdcActionBox.setCurrentIndex(args['action'])
+        if args['state'] == 'CLOSED' or args['state'] == 'LIQUIDATED':
+            self.cdcActionBox.setEnabled(False)
+            self.cdcActionArg.setEnabled(False)
+        else:
+            self.cdcActionBox.currentIndexChanged.connect(self.actionChange)
+            self.cdcActionBox.setCurrentIndex(args['action'])
         if self.cdcActionBox.currentIndex() == 0:
             self.cdcActionBox.currentIndexChanged.emit(args['action'])
         self.lblHint.setText('Available USD: %s' % args['available_usd'])

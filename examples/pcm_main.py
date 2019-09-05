@@ -159,11 +159,17 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         if r < 0:
             QMessageBox.information(self, 'Info', 'Please select a CDC')
             return
-        liquidate = None
         liquidateInfo = self.cdcOp.get_liquidable_info(self.cdcModel.data(self.cdcModel.index(r, 0)))
-        liquidateInfo = json.loads(liquidateInfo)
-        if action == 4 and (not liquidateInfo['isNeedLiquidation'] or liquidateInfo['isBadDebt']):
-            QMessageBox.information(self, 'Info', 'The CDC (ID: %s) cannot be liquidated.' % self.cdcModel.data(self.cdcModel.index(r, 0)))
+        if action == 4:
+            if self.cdcModel.data(self.cdcModel.index(r, 4)) != 'OPEN':
+                QMessageBox.information(self, 'Info', \
+                    'The CDC (ID: %s) is [%s].' % (self.cdcModel.data(self.cdcModel.index(r, 0)), \
+                        self.cdcModel.data(self.cdcModel.index(r, 4))))
+            else:
+                liquidateInfo = json.loads(liquidateInfo)
+                if not liquidateInfo['isNeedLiquidation'] or liquidateInfo['isBadDebt']:
+                    QMessageBox.information(self, 'Info', \
+                        'The CDC (ID: %s) cannot be liquidated.' % self.cdcModel.data(self.cdcModel.index(r, 0)))
             return
         data = {
             'cdc_id': self.cdcModel.data(self.cdcModel.index(r, 0)),
