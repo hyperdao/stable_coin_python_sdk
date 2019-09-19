@@ -1,6 +1,8 @@
+import sys, os
+if hasattr(sys, 'frozen'):
+    os.environ['PATH'] = sys._MEIPASS + ";" + os.environ['PATH']
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pcm_main import PcmMainWindow
-import sys
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')

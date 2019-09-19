@@ -23,9 +23,10 @@ SYNC_CONTRACT_TYPE = 'sync_contract'
 class DataSyncThread(QThread):
     sinSyncState = pyqtSignal(dict)
 
-    def __init__(self, api, cdcOp):
+    def __init__(self, api, collector, cdcOp):
         super().__init__()
         self.api = api
+        self.collector = collector
         self.cdcOp = cdcOp
         self.stopFlag = False
         self.state_file = './pcm_state.json'
@@ -38,7 +39,6 @@ class DataSyncThread(QThread):
             self.state = {'start_block': 1}
 
     def run(self):
-        self.collector = EventsCollector('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', self.api)
         start_block = self.state['start_block']
         end_block = start_block
         while not self.stopFlag:
@@ -82,17 +82,24 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         super(PcmMainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self.default_api_url = self.walletUrlBox.currentText()
+        self.config_file = './pcm_config.json'
+        try:
+            with open(self.config_file, "r") as f:
+                self.config = json.load(f)
+        except:
+            self.config = {'url_index': 0}
+        self.walletUrlBox.setCurrentIndex(self.config['url_index'])
+        self.currentApiUrl = self.walletUrlBox.currentText()
         self.collateral_contract = 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks'
-        self.api = HXWalletApi(name='PCM', rpc_url=self.default_api_url)
-        self.collector = EventsCollector('da', self.collateral_contract, self.api)
-        self.cdcOp = CDCOperation('da', self.collateral_contract, self.api)
-        self.priceFeeder = PriceFeeder('senator0', 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
-        self.syncThread = DataSyncThread(self.api, self.cdcOp)
+        self.api = HXWalletApi(name='PCM', rpc_url=self.currentApiUrl)
+        self.accounts = []
+        self.initWidgets()
+        self._refreshAccountList()
+        self.priceFeeder = PriceFeeder(self.priceFeederAccount, 'HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1', self.api)
+        self.syncThread = DataSyncThread(self.api, self.collector, self.cdcOp)
         self.sinScanStop.connect(self.syncThread.stop)
         self.syncThread.sinSyncState.connect(self.syncStateChange)
         self.syncThread.start()
-        self.initWidgets()
 
     def initWidgets(self):
         self.btnChangeRatio.clicked.connect(lambda: self.cdcManagementAction(0))
@@ -112,14 +119,36 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         self.btnLiquidate.clicked.connect(lambda: self.existedCdcAction(4))#'Liquidate'
         self.btnCloseCdc.clicked.connect(lambda: self.existedCdcAction(5))#'Close'
         self.collateralContractList.addItem(self.collateral_contract)
-        self.accountList.currentIndexChanged.connect(self.accountChange)
+        self.walletUrlBox.currentIndexChanged.connect(self.changeUrl)
+
+    def changeUrl(self):
+        self.config['url_index'] = self.walletUrlBox.currentIndex()
+        QMessageBox.information(self, 'Info', \
+                        'URL changed. Restart Application to take effect.')
+        
+
+    def _refreshAccountList(self):
+        self.accountList.clear()
         accounts = self.api.rpc_request('list_my_accounts', [])
-        self.accounts = accounts if accounts is not None else None
+        if accounts is None:
+            return
+        self.accounts = accounts
+        self.collector = EventsCollector(self.accounts[0]['name'], self.collateral_contract, self.api)
+        self.cdcOp = CDCOperation(self.accounts[0]['name'], self.collateral_contract, self.api)
+        self.accountList.currentIndexChanged.connect(self.accountChange)
+        self.priceFeederAccount = ''
         for a in self.accounts:
+            if 'senator0' == a['name']:
+                self.priceFeederAccount = 'senator0'
+            elif self.priceFeederAccount == '':
+                self.priceFeederAccount = a['name']
             self.accountList.addItem(a['name'])
-        # self.tableView.itemClicked.connect(self.cdcOperation)
 
     def cdcManagementAction(self, op):
+        if self.priceFeederAccount != 'senator0':
+            QMessageBox.warning(self, 'Warning', \
+                        'No price feeder account in wallet.')
+            return
         if op == 0:
             logging.debug('btnChangeRatio clicked')
             adminOp = CDCOperation('senator0', self.collateral_contract, self.api)
@@ -160,13 +189,13 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self, 'Info', 'Please select a CDC')
             return
         liquidateInfo = self.cdcOp.get_liquidable_info(self.cdcModel.data(self.cdcModel.index(r, 0)))
+        liquidateInfo = json.loads(liquidateInfo)
         if action == 4:
             if self.cdcModel.data(self.cdcModel.index(r, 4)) != 'OPEN':
                 QMessageBox.information(self, 'Info', \
                     'The CDC (ID: %s) is [%s].' % (self.cdcModel.data(self.cdcModel.index(r, 0)), \
                         self.cdcModel.data(self.cdcModel.index(r, 4))))
             else:
-                liquidateInfo = json.loads(liquidateInfo)
                 if not liquidateInfo['isNeedLiquidation'] or liquidateInfo['isBadDebt']:
                     QMessageBox.information(self, 'Info', \
                         'The CDC (ID: %s) cannot be liquidated.' % self.cdcModel.data(self.cdcModel.index(r, 0)))
@@ -199,6 +228,10 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
         elif arg['action'] == 'Close':
             ret = self.cdcOp.close_cdc(arg['cdc_id'])
         elif arg['action'] == 'Liquidate':
+            if arg['amount'] == '' or arg['amount2'] == '':
+                QMessageBox.information(self, 'Info', \
+                        'The CDC (ID: %s) cannot be liquidated.' % arg['cdc_id'])
+                return
             self.cdcOp.liquidate(arg['cdc_id'], arg['amount'], arg['amount2'])
         else:
             pass
@@ -207,6 +240,9 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
     def closeEvent(self, e):
         self.sinScanStop.emit()
         self.syncThread.wait()
+        with open(self.config_file, 'w') as wf:
+            json.dump(self.config, wf)
+
 
     def accountChange(self, i):
         account = self.accounts[i]
@@ -218,7 +254,7 @@ class PcmMainWindow(QMainWindow, Ui_MainWindow):
                 self.hXLineEdit.setText(convertCoinWithPrecision(b['amount'], 5))
             elif b['asset_id'] == '1.3.1':
                 self.bTCLineEdit.setText(convertCoinWithPrecision(b['amount']))
-        usdBalance = self.api.rpc_request('invoke_contract_offline', ['da', 'HXCcuGJV3cVnwMPk4S524ADcC9PWxRA3qKR2', 'balanceOf', account['addr']])
+        usdBalance = self.api.rpc_request('invoke_contract_offline', [account['name'], 'HXCcuGJV3cVnwMPk4S524ADcC9PWxRA3qKR2', 'balanceOf', account['addr']])
         self.hUSDLineEdit.setText(convertCoinWithPrecision(usdBalance))
         cdcs = self.collector.query_cdc_by_address(account['addr'])
         self.cdcModel.removeRows(0, self.cdcModel.rowCount())
