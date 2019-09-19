@@ -63,8 +63,8 @@
        <rect>
         <x>10</x>
         <y>300</y>
-        <width>581</width>
-        <height>55</height>
+        <width>651</width>
+        <height>61</height>
        </rect>
       </property>
       <property name="title">
@@ -396,6 +396,11 @@
       <item>
        <property name="text">
         <string>http://192.168.1.121:30088/</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>http://114.67.86.57:30088/</string>
        </property>
       </item>
      </widget>
