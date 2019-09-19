@@ -3,6 +3,7 @@ import logging
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.pool import SingletonThreadPool
 
 
 Base = declarative_base()
@@ -35,7 +36,7 @@ class CdcOpHistoryTable(Base):
             self.cdc_id, self.op, self.block_number)
 
 
-engine = create_engine('sqlite:///cdcs.db', echo=True)
+engine = create_engine('sqlite:///cdcs.db', echo=True, poolclass=SingletonThreadPool, connect_args={'check_same_thread': False})
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
     
