@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
         name='hdao-python-sdk',
-        version='1.0.1b3',
+        version='1.0.1b4',
         description='Python3 implemented SDK for HyperDao',
         long_description=long_description,
         long_description_content_type="text/markdown",
