@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.pool import SingletonThreadPool
+from sqlalchemy import and_
 
 
 Base = declarative_base()
@@ -54,10 +55,39 @@ class EventsCollector:
         self.session = Session()
 
     def query_cdc_by_address(self, address):
-        return self.session.query(CdcTable).filter_by(owner=address).all()
-
+        return self.session.query(CdcTable).filter_by(owner=address).first()
+    
     def query_cdc_by_id(self, cdc_id):
         return self.session.query(CdcTable).filter_by(cdc_id=cdc_id).first()
+
+    def query_cdc(self, options):
+        if 'start' not in options:
+            options['start'] = 0
+        if 'limit' not in options:
+            options['limit'] = 10
+        if 'address' in options and options['address'] != '':
+            address = options['address']
+        else:
+            address = None
+        if 'state' in options and options['state'] != '':
+            state =options['state']
+        else:
+            state = None
+        if address is None and state is None:
+            return self.session.query(CdcTable).\
+                offset(options['start']).limit(options['limit']).all()
+        elif address is None and state is not None:
+            return self.session.query(CdcTable).\
+                filter_by(state=options['state']).\
+                offset(options['start']).limit(options['limit']).all()
+        elif address is not None and state is None:
+            return self.session.query(CdcTable).\
+                filter_by(owner=options['address']).\
+                offset(options['start']).limit(options['limit']).all()
+        elif address is not None and state is not None:
+            return self.session.query(CdcTable).\
+                filter(and_(CdcTable.owner==options['address']), CdcTable.state==options['state']).\
+                offset(options['start']).limit(options['limit']).all()
 
     def query_cdc_op_by_id(self, cdc_id):
         return self.session.query(CdcOpHistoryTable).filter_by(cdc_id=cdc_id).all()
