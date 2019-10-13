@@ -410,6 +410,11 @@
         <string>http://114.67.86.57:30088/</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>http://127.0.0.1:50321/</string>
+       </property>
+      </item>
      </widget>
      <widget class="QLabel" name="label_10">
       <property name="geometry">

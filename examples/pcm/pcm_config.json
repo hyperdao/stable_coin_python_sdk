@@ -1,1 +1,1 @@
-{"url_index": 0}
+{"url_index": 2, "environment": "production", "test": {"collateral_contract": "HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks", "price_feeder_account": "senator0", "price_feeder_contract": "HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1", "usd_contract": ""}, "production": {"collateral_contract": "HXCKbMNLRv1X9wtwus9Wsnd6vkz6NporbZ5L", "price_feeder_account": "senator0", "price_feeder_contract": "HXCHfD5WiSKb57rU5BLqSbz3uHRXdBvsy19B", "usd_contract": "HXCTmGbEzqYq2LADmxQ3tDHnADp1yp5L36ih"}}
