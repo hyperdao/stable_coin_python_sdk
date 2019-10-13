@@ -90,7 +90,7 @@ class EventsCollector:
                 offset(options['start']).limit(options['limit']).all()
 
     def query_cdc_op_by_id(self, cdc_id):
-        return self.session.query(CdcOpHistoryTable).filter_by(cdc_id=cdc_id).all()
+        return self.session.query(CdcOpHistoryTable).filter_by(cdc_id=cdc_id).order_by(CdcOpHistoryTable.block_number.desc()).all()
 
     def collect_event(self, block=1, step=100):
         start_block = int(block)
