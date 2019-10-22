@@ -43,7 +43,7 @@ class TestHdaoEvents():
     
     def test_cdc_query(self):
         cdcs = self.collector.query_cdc_by_address('HXNUeoaUVkUg9q2uokDwzdrxp1uE4L9VhTSs')
-        assert(len(cdcs) == 1)
+        assert(len(cdcs) >= 1)
         assert(cdcs[0].cdc_id == '0694d145b7000d8d5b13f9f4c4acbee3533ca14a')
     
     def test_cdc_op_query(self):

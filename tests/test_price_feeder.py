@@ -42,24 +42,33 @@ class TestPriceFeeder():
 
     def test_change_owner(self):
         previousOwner = self.pf.get_owner()
-        assert(previousOwner == PRICE_FEEDER['address'])
-        self.pf.change_owner(USER1['address'])
+        newOwner = USER1['address']
+        if previousOwner == PRICE_FEEDER['address']:
+            self.pf.change_owner(USER1['address'])
+        elif previousOwner == USER1['address']:
+            newPf = PriceFeeder(USER1['account'], USER1['address'], self.api)
+            newPf.change_owner(previousOwner)
+            newOwner = USER1['address']
         time.sleep(6)
         currentOwner = self.pf.get_owner()
-        assert(currentOwner == USER1['address'])
-        newPf = PriceFeeder(USER1['account'], USER1['address'], self.api)
-        newPf.change_owner(previousOwner)
+        assert(currentOwner != newOwner)
 
     def test_change_feeder(self):
         feeders = json.loads(self.pf.get_feeders())
         assert(PRICE_FEEDER['address'] in feeders)
         assert(USER1['address'] not in feeders)
-        self.pf.add_feeder(USER1['address'])
+        previousOwner = self.pf.get_owner()
+        if previousOwner == PRICE_FEEDER['address']:
+            currentPf = self.pf
+        elif previousOwner == USER1['address']:
+            newPf = PriceFeeder(USER1['account'], USER1['address'], self.api)
+            currentPf = newPf
+        currentPf.add_feeder(USER1['address'])
         time.sleep(6)
         feeders = json.loads(self.pf.get_feeders())
         assert(PRICE_FEEDER['address'] in feeders)
         assert(USER1['address'] in feeders)
-        self.pf.remove_feeder(USER1['address'])
+        currentPf.remove_feeder(USER1['address'])
         time.sleep(6)
         feeders = json.loads(self.pf.get_feeders())
         assert(PRICE_FEEDER['address'] in feeders)
