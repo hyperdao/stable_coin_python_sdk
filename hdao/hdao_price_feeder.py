@@ -43,6 +43,9 @@ class PriceFeeder:
     def get_quote_asset(self):
         return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "quotaAsset", ""])
 
+    def get_feedPrices(self):
+        return self.wallet_api.rpc_request('invoke_contract_offline', [self.account, self.contract, "feedPrices", ""])
+
 
 if __name__ == "__main__":
     pass

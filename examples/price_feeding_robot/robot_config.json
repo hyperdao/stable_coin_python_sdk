@@ -1,0 +1,105 @@
+{
+	"exchangeWebSitesInfo": {
+		"btcusdt": {
+			"zb": {
+				"name": "zb",
+				"url": "http://api.zb.plus/data/v1/ticker?market=btc_usdt",
+				"accessPriceKeys": ["ticker", "buy"],
+				"muti_factor": 1
+			},
+			"okex": {
+				"name": "okex",
+				"url": "https://www.okex.com/api/spot/v3/instruments/BTC-USDT/ticker",
+				"accessPriceKeys": ["best_bid"],
+				"muti_factor": 1
+			},
+            "feixiaohao": {
+				"name": "feixiaohao",
+				"url": "https://fxhapi.feixiaohao.com/public/v1/ticker?start=0&limit=1",
+				"accessPriceKeys": [0,"price_usd"],
+				"muti_factor": 1
+			},
+			"huobi": {
+				"name": "huobi",
+				"url": "https://api.huobi.pro/market/detail/merged?symbol=btcusdt",
+				"accessPriceKeys": ["bid",0],
+				"muti_factor": 1
+			}
+		},
+        "ethusdt": {
+			"zb": {
+				"name": "zb",
+				"url": "http://api.zb.plus/data/v1/ticker?market=eth_usdt",
+				"accessPriceKeys": ["ticker", "buy"],
+				"muti_factor": 1
+			},
+			"okex": {
+				"name": "okex",
+				"url": "https://www.okex.com/api/spot/v3/instruments/ETH-USDT/ticker",
+				"accessPriceKeys": ["best_bid"],
+				"muti_factor": 1
+			},
+            "feixiaohao": {
+				"name": "feixiaohao",
+				"url": "https://fxhapi.feixiaohao.com/public/v1/ticker?start=1&limit=1",
+				"accessPriceKeys": [0,"price_usd"],
+				"muti_factor": 1
+			},
+			"huobi": {
+				"name": "huobi",
+				"url": "https://api.huobi.pro/market/detail/merged?symbol=ethusdt",
+				"accessPriceKeys": ["bid",0],
+				"muti_factor": 1
+			}
+		},
+        "hxusdt": {
+          "zb": {
+            "name": "zb",
+            "url": "http://api.zb.plus/data/v1/ticker?market=hx_usdt",
+            "accessPriceKeys": [
+              "ticker",
+              "buy"
+            ],
+            "muti_factor": 1000
+          }
+        }
+	},
+	"feedingContractsInfo": [{
+			"symbolPair": "btcusdt",
+			"wallet_api_url": "http://192.168.1.121:30088/",
+			"priceFeeder_contract_address": "HXCTkW3MD8te4uoyndoRvtds7HoFvhhH2EWr",
+			"feeders": [{
+				"account": "senator0",
+				"websites": ["feixiaohao", "zb"]
+			}, {
+				"account": "april",
+				"websites": ["feixiaohao","zb"]
+			}],
+			"interval": 4
+		},
+		{
+			"symbolPair": "ethusdt",
+			"wallet_api_url": "http://192.168.1.121:30088/",
+			"priceFeeder_contract_address": "HXCRMLXnJjFvD1hXoHtWDxUkJvptxEgocRjx",
+			"feeders": [{
+				"account": "senator0",
+				"websites": ["zb", "feixiaohao"]
+			}, {
+				"account": "april",
+				"websites": ["zb", "feixiaohao"]
+			}],
+			"interval": 4
+		},
+        {
+			"symbolPair": "hxusdt",
+			"wallet_api_url": "http://192.168.1.121:30088/",
+			"priceFeeder_contract_address": "HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1",
+			"feeders": [{
+				"account": "senator0",
+				"websites": ["zb"]
+			}],
+			"interval": 4
+		}
+	]
+}
+
