@@ -3,9 +3,11 @@ import datetime
 import time
 import sys
 import threading
+import decimal
 from hdao.hdao_price_feeder import PriceFeeder
 from hdao.hx_wallet_api import *
 
+import logging
 
 # ok   https://www.okex.com/api/spot/v3/instruments/BTC-USDT/ticker
 # {"best_ask":"9545.2","best_bid":"9545.1","instrument_id":"BTC-USDT","product_id":"BTC-USDT","last":"9545","ask":"9545.2","bid":"9545.1","open_24h":"9148.5","high_24h":"9906.4","low_24h":"9130.3","base_volume_24h":"47433.4","timestamp":"2019-10-28T06:17:18.417Z","quote_volume_24h":"452603436.8"}
@@ -40,19 +42,21 @@ class ContractFeedingInfo:
 
 class PriceGrab:
     def __init__(self,symbolPair,websiteInfo):
+        self.logger = logging.getLogger("priceFeedingRobot")
         self.symbolPair = symbolPair
         self.exchangeWebSiteName = websiteInfo['name']
         self.url= websiteInfo['url']
         self.accessPriceKeys = websiteInfo['accessPriceKeys']
         self.muti_factor = websiteInfo['muti_factor']
 
+
     def grab_price(self):
         try:
             response = requests.get(self.url)
             result = response.text
             if(result is None or len(result)==0):
-                print(response)
-                print("error when grab_price get url:"+self.url)
+                self.logger.info(response)
+                self.logger.error("error when grab_price get url:"+self.url)
                 return None
             jsonresult = json.loads(result)
             for i in range(0,len(self.accessPriceKeys)):
@@ -64,16 +68,16 @@ class PriceGrab:
             if(price is None):
                 return None
             if(self.muti_factor!=1):
-                price = float(price)*(self.muti_factor)
+                price = (decimal.Decimal(str(price))*self.muti_factor).quantize(decimal.Decimal('0.00000001'))
             return str(price)
         except BaseException as e:
-            print(e)
+            self.logger.error(e)
             return None
-
 
 
 class APriceFeeder:
     def __init__(self,symbolPair,priceFeeder_contract_address,accountName,wallet_api_url,exchangeWebSites):
+        self.logger = logging.getLogger("priceFeedingRobot")
         self.priceGrabs = []
         for websiteInfo in exchangeWebSites:
             self.priceGrabs.append(PriceGrab(symbolPair,websiteInfo))
@@ -86,6 +90,7 @@ class APriceFeeder:
         self.account = accountName
 
 
+
     def setPriceGrab(self,exchangeWebSiteName,symbolPair):
         self.priceGrab = PriceGrab(exchangeWebSiteName, symbolPair)
 
@@ -95,15 +100,16 @@ class APriceFeeder:
 
     def feedPrice(self):
         maxChangeRatio = 0.099999
+
         pricestr = None
         for priceGrab in self.priceGrabs:
             pricestr = priceGrab.grab_price()
             if(pricestr is not None):
                 break
             else:
-                print("grab price fail ! from exchangeUrl:"+priceGrab.url)
+                self.logger.error("grab price fail ! from exchangeUrl:"+priceGrab.url)
         if(pricestr is None ):
-            print("error !!! grab price from all setted exchanges fail !!! please check network !!!" )
+            self.logger.error("grab price from all setted exchanges fail !!! please check network !!!" )
             return False
 
         r = self.walletPriceFeederApi.get_feedPrices()
@@ -117,24 +123,26 @@ class APriceFeeder:
                 r = self.walletPriceFeederApi.feed_price(str(newPrice))
                 if (r is None):
                     return False
-                print(" feeder:"+self.account+"feed price exceed max change ratio 0.1  feed new price:"+str(newPrice)  + "orig price:"+str(origPrice)+"\tcontract:" + self.walletPriceFeederApi.contract )
+                self.logger.info(" feeder:"+self.account+"feed price exceed max change ratio 0.1  feed new price:"+str(newPrice)  + "orig price:"+str(origPrice)+"\tcontract:" + self.walletPriceFeederApi.contract )
                 origPrice = newPrice
             r = self.walletPriceFeederApi.feed_price(pricestr)
             if (r is None):
                 return False
-            print(" feeder:"+self.account +"\tfeed price:" + pricestr +"\tcontract:" + self.walletPriceFeederApi.contract)
+            self.logger.info(" feeder:"+self.account +"\tfeed price:" + pricestr +"\tcontract:" + self.walletPriceFeederApi.contract)
+
         else:
             while (price < origPrice * (1 - maxChangeRatio)):
                 newPrice = origPrice * (1 - maxChangeRatio)
                 r = self.walletPriceFeederApi.feed_price(str(newPrice))
                 if (r is None):
                     return False
-                print(" feeder:"+self.account+"feed price exceed max change ratio 0.1  feed new price:" + str(newPrice) + "orig price:"+str(origPrice)+"\tcontract:" + self.walletPriceFeederApi.contract )
+                self.logger.info(" feeder:"+self.account+"feed price exceed max change ratio 0.1  feed new price:" + str(newPrice) + "orig price:"+str(origPrice)+"\tcontract:" + self.walletPriceFeederApi.contract )
                 origPrice = newPrice
             r = self.walletPriceFeederApi.feed_price(pricestr)
             if (r is None):
                 return False
-            print(" feeder:"+self.account+"\tfeed price:" + pricestr +"\tcontract:" + self.walletPriceFeederApi.contract )
+            self.logger.info(
+                " feeder:" + self.account + "\tfeed price:" + pricestr + "\tcontract:" + self.walletPriceFeederApi.contract)
         return True
 
 
@@ -142,6 +150,7 @@ class APriceFeeder:
 class ContractPriceFeedingRobot(threading.Thread):
     def __init__(self,contractFeedingInfo,exchangeWebSitesInfo):
         threading.Thread.__init__(self)
+        self.logger = logging.getLogger("priceFeedingRobot")
         self.contractAddr = contractFeedingInfo.priceFeeder_contract_address
         self.contractFeedingInfo = contractFeedingInfo
         self.aPriceFeeders = []
@@ -172,7 +181,7 @@ class ContractPriceFeedingRobot(threading.Thread):
     def run(self):  # 把要执行的代码写到run函数里面
         self.running = True
         interval = self.contractFeedingInfo.interval
-        print("Starting feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:"+str(interval) + " start time:"+str(datetime.datetime.now()))
+        self.logger.info("Starting feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:"+str(interval) + " start time:"+str(datetime.datetime.now()))
 
         isContinue = True
         self.startTime = datetime.datetime.now()
@@ -182,7 +191,7 @@ class ContractPriceFeedingRobot(threading.Thread):
             for aPriceFeeder in self.aPriceFeeders:
                 r = aPriceFeeder.feedPrice()
                 if(r==False):
-                    print("feed price fail! contract:"+ self.contractFeedingInfo.priceFeeder_contract_address + " account:"+aPriceFeeder.account)
+                    self.logger.error("feed price fail! contract:"+ self.contractFeedingInfo.priceFeeder_contract_address + " account:"+aPriceFeeder.account)
                     self.failFeedCount = self.failFeedCount + 1
                 else:
                     self.successFeedCount = self.successFeedCount + 1
@@ -190,19 +199,17 @@ class ContractPriceFeedingRobot(threading.Thread):
             rounds = rounds + 1
             time.sleep(interval)
             if ((self.failFeedCount > 5) and  self.failFeedCount/(self.failFeedCount+self.successFeedCount) >= 1/feedersCount):
-                print("run wrong !!! failFeedCount/(failFeedCount+successFeedCount) >= 1/feedersCount")
-                print("please check !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print("end feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:" + str(
+                self.logger.error("run wrong !!! failFeedCount/(failFeedCount+successFeedCount) >= 1/feedersCount")
+                self.logger.error("please check ! end feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:" + str(
                     interval) + " start time:" + str(datetime.datetime.now()))
                 isContinue = False
-        print(
-            "end feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:" + str(
+
+        self.logger.info("end feeding price to contract:" + self.contractFeedingInfo.priceFeeder_contract_address + " interval:" + str(
                 interval) + " end time:" + str(datetime.datetime.now()))
         if(self.running):
             self.running = False
         self.stopTime = datetime.datetime.now()
-        print("total time:"+str(self.stopTime-self.startTime) + " failFeedCount:" + str(self.failFeedCount) + " successFeedCount:" + str(self.successFeedCount)+ " feedersCount:"+str(feedersCount) + " roundsCount:"+str(rounds))
-
+        self.logger.info("total time:"+str(self.stopTime-self.startTime) + " failFeedCount:" + str(self.failFeedCount) + " successFeedCount:" + str(self.successFeedCount)+ " feedersCount:"+str(feedersCount) + " roundsCount:"+str(rounds))
 
     def stop(self):
         self.running = False
@@ -216,26 +223,37 @@ class PriceFeedingRobot:
             try:
                 self.jsonconfigs = json.load(f)
             except BaseException as e:
-                print(e)
+                self.logger.error(e)
                 sys.exit(1)
             finally:
                 f.close()
 
     def __init__(self,robot_config_filepath):
+        self.logger = logging.getLogger("priceFeedingRobot")
         self.robots = []
         self.jsonconfigs = {}
         self.robot_config_filepath = robot_config_filepath
+
+        self.logger.setLevel(level=logging.INFO)
+        handler = logging.FileHandler("priceFeedingRobot_log.txt")
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.info("Start print log")
+
+
 
     def stop(self):
         if (len(self.robots) > 0):
             for robot in self.robots:
                 robot.stop()
-                print("stop price feeding of contract:" + robot.contractAddr)
+                self.logger.info("stop price feeding of contract:" + robot.contractAddr)
             self.robots.clear()
 
     def start(self):
         if(len(self.robots)>0):
-            print("already started now, can't start again")
+            self.logger.warning("already started now, can't start again")
             return
         try:
             self.loadConfigFile()
@@ -245,28 +263,29 @@ class PriceFeedingRobot:
                 contractFeedingInfo = ContractFeedingInfo()
                 contractFeedingInfo.__dict__ = feedingContractsInfo[i]
                 robot = ContractPriceFeedingRobot(contractFeedingInfo, exchangeWebSitesInfo)
+                #robot.setDaemon(True)
                 self.robots.append(robot)
                 # robot.join()
         except BaseException as e:
-            print(e)
+            self.logger.error(e)
             sys.exit(1)
 
         try:
             for robot in self.robots:
                 robot.start()
         except BaseException as e:
-            print(e)
+            self.logger.error(e)
             sys.exit(1)
 
     def restart(self):
-        print("restart robots")
+        self.logger.info("restart robots")
         self.stop()
         self.start()
 
     def is_Unnormal(self):
         for robot in self.robots:
             if(not robot.is_alive()):
-                print("error!!!! thread exit unnormal feeding contract:"+robot.contractAddr)
+                self.logger.error("error!!!! thread exit unnormal feeding contract:"+robot.contractAddr)
                 return True
         return False
 
@@ -276,6 +295,7 @@ if __name__ == '__main__':
     filepath = "robot_config.json"
     r = PriceFeedingRobot(filepath)
     r.start()
+
 
     while(True):
         time.sleep(3)
@@ -295,7 +315,7 @@ if __name__ == '__main__':
         elif (val == "exit"):
             isExit = True
         else:
-            print("input command: [stop,start,restart,exit]")
+            self.logger.info("input command: [stop,start,restart,exit]")
     '''
 
 

@@ -73,7 +73,7 @@
 				"websites": ["feixiaohao", "zb"]
 			}, {
 				"account": "april",
-				"websites": ["feixiaohao","zb"]
+				"websites": ["zb","feixiaohao"]
 			}],
 			"interval": 4
 		},
@@ -83,7 +83,7 @@
 			"priceFeeder_contract_address": "HXCRMLXnJjFvD1hXoHtWDxUkJvptxEgocRjx",
 			"feeders": [{
 				"account": "senator0",
-				"websites": ["zb", "feixiaohao"]
+				"websites": ["feixiaohao", "zb"]
 			}, {
 				"account": "april",
 				"websites": ["zb", "feixiaohao"]
