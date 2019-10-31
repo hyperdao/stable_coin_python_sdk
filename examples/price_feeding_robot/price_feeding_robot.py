@@ -298,7 +298,7 @@ if __name__ == '__main__':
 
 
     while(True):
-        time.sleep(3)
+        time.sleep(60)
         if(r.is_Unnormal()):
             r.restart()
 
