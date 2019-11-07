@@ -6,13 +6,16 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Column, Integer, String, Boolean,ForeignKey
 from sqlalchemy.pool import SingletonThreadPool
 from sqlalchemy import and_
-#from sqlalchemy.orm import *
+from sqlalchemy import func
+
 
 Base = declarative_base()
 
 class CdcChainTable(Base):
     __tablename__ = 'cdc_chain'
     chain_id = Column(String(128), primary_key=True, nullable=False)
+    cdc_contract_address = Column(String(128), nullable=False)
+    contract_register_block_num = Column(Integer, nullable=False)
     end_block_num = Column(Integer, nullable=False)
     end_block_id = Column(String(128), nullable=False)
 
@@ -39,11 +42,17 @@ class CdcEventTable(Base):
     event_id = Column(Integer, primary_key=True, nullable=False)
     tx_id = Column(String(128), primary_key=True, nullable=False)
     op = Column(String(16), nullable=False)
-    block_number = Column(Integer, nullable=False)
 
     def __repr__(self):
         return "<CdcEvent(cdcId='%s', op='%s', block_number='%d')>" % (
             self.cdcId, self.op, self.block_number)
+
+
+class StableTokenSupplyHistoryTable(Base):
+    __tablename__ = 'StableTokenSupplyHistory'
+    block_number = Column(Integer, primary_key=True, nullable=False)
+    supply = Column(Integer, nullable=False)
+
 
 class EventOpenCdcTable(Base):
     __tablename__ = 'OpenCdc'
@@ -53,6 +62,9 @@ class EventOpenCdcTable(Base):
     secSinceEpoch = Column(Integer, nullable=False)
     collateralAmount = Column(Integer, nullable=False)
     stableTokenAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
+
+
 
 
 class EventLiquidateTable(Base):
@@ -73,12 +85,14 @@ class EventLiquidateTable(Base):
     stabilityFee = Column(Integer, nullable=False)
     repayStableTokenAmount = Column(Integer, nullable=False)
     auctionCollateralAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventAddCollateralTable(Base):
     __tablename__ = 'AddCollateral'
     event_id = Column(Integer, ForeignKey("CdcEvent.event_id"),primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
     addAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventCloseCdcTable(Base):
     __tablename__ = 'CloseCdc'
@@ -89,6 +103,7 @@ class EventCloseCdcTable(Base):
     stabilityFee = Column(Integer, nullable=False)
     collateralAmount = Column(Integer, nullable=False)
     stableTokenAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventExpandLoanTable(Base):
     __tablename__ = 'ExpandLoan'
@@ -98,6 +113,7 @@ class EventExpandLoanTable(Base):
     repayFee  = Column(Integer, nullable=False)
     expandLoanAmount = Column(Integer, nullable=False)
     realGotAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventWidrawCollateralTable(Base):
     __tablename__ = 'WidrawCollateral'
@@ -105,6 +121,7 @@ class EventWidrawCollateralTable(Base):
     cdcId = Column(String(128), nullable=False, index=True)
     from_address = Column(String(64),  nullable=False)
     widrawCollateralAmount  = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventPayBackTable(Base):
     __tablename__ = 'PayBack'
@@ -115,6 +132,7 @@ class EventPayBackTable(Base):
     repayPrincipal = Column(Integer, nullable=False)
     payBackAmount = Column(Integer, nullable=False)
     realPayBackAmount = Column(Integer, nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 class EventTransferCdcTable(Base):
     __tablename__ = 'TransferCdc'
@@ -122,6 +140,7 @@ class EventTransferCdcTable(Base):
     cdcId = Column(String(128), nullable=False, index=True)
     from_address = Column(String(64),  nullable=False)
     to_address = Column(String(64), nullable=False)
+    block_number = Column(Integer, nullable=False)
 
 ########################################################################
 class EventTakeBackCollateralByCdcTable(Base):
@@ -148,12 +167,26 @@ Session = sessionmaker(bind=engine)
 ####################################################################
 class HdaoEventsCollector:
 
-    def __init__(self, account, contract, wallet_api):
+    def __init__(self, account, contract, wallet_api,batchGetNum=None):
         self.account = account
         self.contract = contract
         self.walletApi = wallet_api
         self.session = Session()
-        self.batchGetNum = 1000
+        if(batchGetNum is not None):
+            self.batchGetNum = batchGetNum
+        else:
+            self.batchGetNum = 2000
+        r = self.walletApi.rpc_request("get_simple_contract_info", [self.contract])
+        self.registered_block_num = r['registered_block']
+
+
+    def query_last_stable_token_supply(self):
+        block_number = self.session.query(func.max(StableTokenSupplyHistoryTable.block_number)).first()[0]
+        if(block_number is None):
+            return 0
+        else:
+            supply = self.session.query(StableTokenSupplyHistoryTable.supply).filter_by(block_number=block_number).first()[0]
+            return supply
 
     def query_cdc_by_address(self, address):
         return self.session.query(CdcTable).filter_by(owner=address).first()
@@ -197,6 +230,9 @@ class HdaoEventsCollector:
                 filter(and_(CdcTable.owner == options['address']), CdcTable.state == options['state']). \
                 offset(options['start']).limit(options['limit']).all()
 
+
+    ######################################################################################################################################
+
     #def query_cdc_op_by_id(self, cdcId):
     #    return self.session.query(CdcEventTable).filter_by(cdcId=cdcId).order_by(
     #       CdcEventTable.block_number.desc()).all()
@@ -214,6 +250,8 @@ class HdaoEventsCollector:
         r = self.walletApi.rpc_request("get_block",[end_block_num])
         end_block_id = r['block_id']
         event_id = start_event_id
+        nowSupply = self.query_last_stable_token_supply()
+
         for event in events:
             cdcInfo = json.loads(event['event_arg'])
             txid = event['trx_id']
@@ -228,8 +266,7 @@ class HdaoEventsCollector:
                 self.session.add(CdcEventTable(
                     event_id = event_id,
                     tx_id=txid,
-                    op=event['event_name'],
-                    block_number=event['block_num']
+                    op=event['event_name']
                 ))
                 if event['event_name'] == 'OpenCdc':
                     self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).delete()
@@ -245,8 +282,16 @@ class HdaoEventsCollector:
                                           owner=cdcInfo['owner'],
                                           collateralAmount=cdcInfo['collateralAmount'],
                                           stableTokenAmount=cdcInfo['stableTokenAmount'],
-                                          secSinceEpoch = cdcInfo['secSinceEpoch'])
+                                          secSinceEpoch = cdcInfo['secSinceEpoch'],
+                                          block_number=event['block_num'])
                     self.session.add(e)
+                    if(cdcInfo['stableTokenAmount'] > 0):
+                        nowSupply = nowSupply + cdcInfo['stableTokenAmount']
+                        self.session.query(StableTokenSupplyHistoryTable).filter_by(block_number=event['block_num']).delete()
+                        e = StableTokenSupplyHistoryTable(
+                                              supply=nowSupply,
+                                              block_number=event['block_num'])
+                        self.session.add(e)
 
                 elif event['event_name'] == 'AddCollateral':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -257,7 +302,8 @@ class HdaoEventsCollector:
                         self.session.add(cdc)
                         e = EventAddCollateralTable(event_id=event_id,
                                               cdcId=cdcInfo['cdcId'],
-                                            addAmount=cdcInfo['addAmount'])
+                                            addAmount=cdcInfo['addAmount'],
+                                            block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'WidrawCollateral':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -269,7 +315,8 @@ class HdaoEventsCollector:
                         e = EventWidrawCollateralTable(event_id=event_id,
                                                 cdcId=cdcInfo['cdcId'],
                                                 from_address=cdcInfo['from_address'],
-                                                widrawCollateralAmount=cdcInfo['widrawCollateralAmount'])
+                                                widrawCollateralAmount=cdcInfo['widrawCollateralAmount'],
+                                                block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'ExpandLoan':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -283,7 +330,16 @@ class HdaoEventsCollector:
                                                  from_address=cdcInfo['from_address'],
                                                  realGotAmount=cdcInfo['realGotAmount'],
                                                  expandLoanAmount=cdcInfo['expandLoanAmount'],
-                                                 repayFee=cdcInfo['repayFee'])
+                                                 repayFee=cdcInfo['repayFee'],
+                                                 block_number=event['block_num'])
+                        self.session.add(e)
+
+                        nowSupply = nowSupply + cdcInfo['expandLoanAmount']
+                        self.session.query(StableTokenSupplyHistoryTable).filter_by(
+                            block_number=event['block_num']).delete()
+                        e = StableTokenSupplyHistoryTable(
+                                                          supply=nowSupply,
+                                                          block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'PayBack':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -298,7 +354,16 @@ class HdaoEventsCollector:
                                                  payBackAmount=cdcInfo['payBackAmount'],
                                                  realPayBackAmount=cdcInfo['realPayBackAmount'],
                                                  repayPrincipal=cdcInfo['repayPrincipal'],
-                                                 fee=cdcInfo['fee'])
+                                                 fee=cdcInfo['fee'],
+                                                block_number=event['block_num'])
+                        self.session.add(e)
+
+                        nowSupply = nowSupply - cdcInfo['repayPrincipal']
+                        self.session.query(StableTokenSupplyHistoryTable).filter_by(
+                            block_number=event['block_num']).delete()
+                        e = StableTokenSupplyHistoryTable(
+                                                          supply=nowSupply,
+                                                          block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'TransferCdc':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -313,7 +378,8 @@ class HdaoEventsCollector:
                         e = EventTransferCdcTable(event_id=event_id,
                                                  cdcId=cdcInfo['cdcId'],
                                                  from_address=cdcInfo['from_address'],
-                                                  to_address=cdcInfo['to_address'])
+                                                  to_address=cdcInfo['to_address'],
+                                                  block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'Liquidate':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -338,7 +404,16 @@ class HdaoEventsCollector:
                                                 penaltyAmount=cdcInfo['penaltyAmount'],
                                                 isNeedLiquidation=cdcInfo['isNeedLiquidation'],
                                                 repayStableTokenAmount=cdcInfo['repayStableTokenAmount'],
-                                                auctionCollateralAmount=cdcInfo['auctionCollateralAmount'])
+                                                auctionCollateralAmount=cdcInfo['auctionCollateralAmount'],
+                                                block_number=event['block_num'])
+                        self.session.add(e)
+
+                        nowSupply = nowSupply - cdcInfo['stableTokenAmount']
+                        self.session.query(StableTokenSupplyHistoryTable).filter_by(
+                            block_number=event['block_num']).delete()
+                        e = StableTokenSupplyHistoryTable(
+                                                          supply=nowSupply,
+                                                          block_number=event['block_num'])
                         self.session.add(e)
                 elif event['event_name'] == 'CloseCdc':
                     cdc = self.session.query(CdcTable).filter_by(cdcId=cdcInfo['cdcId']).first()
@@ -353,7 +428,16 @@ class HdaoEventsCollector:
                                                stabilityFee=cdcInfo['stabilityFee'],
                                                secSinceEpoch=cdcInfo['secSinceEpoch'],
                                                collateralAmount=cdcInfo['collateralAmount'],
-                                               stableTokenAmount=cdcInfo['stableTokenAmount'])
+                                               stableTokenAmount=cdcInfo['stableTokenAmount'],
+                                               block_number=event['block_num'])
+                        self.session.add(e)
+
+                        nowSupply = nowSupply - cdcInfo['stableTokenAmount']
+                        self.session.query(StableTokenSupplyHistoryTable).filter_by(
+                            block_number=event['block_num']).delete()
+                        e = StableTokenSupplyHistoryTable(
+                                                          supply=nowSupply,
+                                                          block_number=event['block_num'])
                         self.session.add(e)
                 event_count = event_count + 1
                 event_id = event_id + 1
@@ -361,6 +445,8 @@ class HdaoEventsCollector:
         self.session.query(CdcChainTable).filter_by(chain_id=chain_id).delete()
         self.session.add(CdcChainTable(
             chain_id=chain_id,
+            cdc_contract_address=self.contract,
+            contract_register_block_num=self.registered_block_num,
             end_block_num=end_block_num,
             end_block_id = end_block_id
         ))
@@ -384,11 +470,12 @@ class HdaoEventsCollector:
             cdc_chain = self.query_cdc_chain_by_id(chain_id)
             if(cdc_chain is None):
                 logging.info("try collect from first")
-                r = self.walletApi.rpc_request("get_simple_contract_info", [self.contract])
-                registered_block = r['registered_block']
-                start_block = registered_block
+
+                start_block = self.registered_block_num
                 self.session.add(CdcChainTable(
                     chain_id=chain_id,
+                    cdc_contract_address=self.contract,
+                    contract_register_block_num=self.registered_block_num,
                     end_block_num=0,
                     end_block_id=" "
                 ))
