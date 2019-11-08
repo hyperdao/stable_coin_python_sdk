@@ -11,6 +11,7 @@ from cdc_events_colletor import StableTokenSupplyHistoryTable
 
 from sqlalchemy.sql import operators
 from sqlalchemy import func
+from sqlalchemy import and_
 import json
 
 
@@ -27,25 +28,20 @@ from sqlalchemy.pool import SingletonThreadPool
 #sqlite_db_path = 'sqlite:///cdcs.db'
 class Cdc_Charts_Data:
     def __init__(self,wallet_rpc_url,sqlite_db_path):
-
         self.walletApi = HXWalletApi(name='events', rpc_url=wallet_rpc_url)
-
         Base = declarative_base()
         engine = create_engine(sqlite_db_path, echo=True, poolclass=SingletonThreadPool,
                                connect_args={'check_same_thread': False})
         Base.metadata.create_all(engine)
         self.Session = sessionmaker(bind=engine)
-        #self.session = Session()
-        #self.collector = HdaoEventsCollector('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', api)
+
 
     def get_liquidate_chart_data(self,interlval_blocks):
         session = self.Session()
         try:
-
             r = session.query(func.count('*').label("count"),func.sum(EventLiquidateTable.stableTokenAmount).label("sum"),
                                               operators.op(EventLiquidateTable.block_number, '/', interlval_blocks).label(
                                                   "blockn")).group_by("blockn").order_by("blockn").all() # week
-
             return r
         except BaseException as e:
             print(e)
@@ -57,11 +53,9 @@ class Cdc_Charts_Data:
     def get_opencdc_chart_data(self,interlval_blocks):
         session = self.Session()
         try:
-
             r = session.query(func.count('*').label("count"),func.sum(EventOpenCdcTable.stableTokenAmount).label("sum"),
                                               operators.op(EventOpenCdcTable.block_number, '/', interlval_blocks).label(
                                                   "blockn")).group_by("blockn").order_by("blockn").all() # week
-
             return r
         except BaseException as e:
             print(e)
@@ -72,11 +66,9 @@ class Cdc_Charts_Data:
     def get_payback_chart_data(self,interlval_blocks):
         session = self.Session()
         try:
-
             r = session.query(func.count('*').label("count"),func.sum(EventPayBackTable.repayPrincipal).label("sum"),
                                               operators.op(EventPayBackTable.block_number, '/', interlval_blocks).label(
-                                                  "blockn")).group_by("blockn").order_by("blockn").all() # week
-
+                                                  "blockn")).group_by("blockn").order_by("blockn").all()
             return r
         except BaseException as e:
             print(e)
@@ -87,10 +79,9 @@ class Cdc_Charts_Data:
     def get_expandLoan_chart_data(self,interlval_blocks):
         session = self.Session()
         try:
-
             r = session.query(func.count('*').label("count"),func.sum(EventExpandLoanTable.expandLoanAmount).label("sum"),
                                               operators.op(EventExpandLoanTable.block_number, '/', interlval_blocks).label(
-                                                  "blockn")).group_by("blockn").order_by("blockn").all() # week
+                                                  "blockn")).group_by("blockn").order_by("blockn").all()
 
             return r
         except BaseException as e:
@@ -102,11 +93,9 @@ class Cdc_Charts_Data:
     def get_closecdc_chart_data(self,interlval_blocks):
         session = self.Session()
         try:
-
             r = session.query(func.count('*').label("count"),func.sum(EventCloseCdcTable.stableTokenAmount).label("sum"),
                                               operators.op(EventCloseCdcTable.block_number, '/', interlval_blocks).label(
-                                                  "blockn")).group_by("blockn").order_by("blockn").all() # week
-
+                                                  "blockn")).group_by("blockn").order_by("blockn").all()
             return r
         except BaseException as e:
             print(e)
@@ -116,7 +105,6 @@ class Cdc_Charts_Data:
 
     def get_supply_history_data(self,startblocknum=None):
         session = self.Session()
-
         try:
             if (startblocknum is None):
                 return session.query(StableTokenSupplyHistoryTable.block_number,StableTokenSupplyHistoryTable.supply).order_by(StableTokenSupplyHistoryTable.block_number.asc()).all()
@@ -145,11 +133,10 @@ class Cdc_Charts_Data:
         session = self.Session()
         try:
             if(hign is not None):
-                return session.query(func.count('*').label("count")).filter(CdcTable.state==1,CdcTable.stableTokenAmount>=low,CdcTable.stableTokenAmount<hign).first() # week
+                return session.query(func.count('*').label("count")).filter(CdcTable.state==1,CdcTable.stableTokenAmount>=low,CdcTable.stableTokenAmount<hign).first() 
             else:
                 return session.query(func.count('*').label("count")).filter(CdcTable.state == 1,
-                                                                            CdcTable.stableTokenAmount >= low).first()  # week
-
+                                                                            CdcTable.stableTokenAmount >= low).first()
         except BaseException as e:
             print(e)
             return []
@@ -255,8 +242,8 @@ if __name__ == "__main__":
     c = Cdc_Charts_Data(wallet_rpc_url,sqlite_db_path)
     one_hour_blocks = int(60*60/5)
     r = c.get_liquidate_chart_data(one_hour_blocks)
-    #c.close_session()
     print(r)
+
 
 
 

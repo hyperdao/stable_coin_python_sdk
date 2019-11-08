@@ -3,7 +3,7 @@ import logging
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, Column, Integer, String, Boolean,ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean,ForeignKey,BigInteger
 from sqlalchemy.pool import SingletonThreadPool
 from sqlalchemy import and_
 from sqlalchemy import func
@@ -23,9 +23,9 @@ class CdcTable(Base):
     __tablename__ = 'cdcs'
     cdcId = Column(String(128), primary_key=True, nullable=False)
     state = Column(Integer, nullable=False)
-    stabilityFee = Column(String(128), default="")
-    collateralAmount = Column(String(128), nullable=False)
-    stableTokenAmount = Column(String(128), nullable=False)
+    stabilityFee = Column(BigInteger, default="")
+    collateralAmount = Column(BigInteger, nullable=False)
+    stableTokenAmount = Column(BigInteger, nullable=False)
     owner = Column(String(128), nullable=False)
     liquidator = Column(String(128), default="")
     block_number = Column(Integer, nullable=False)
@@ -51,7 +51,7 @@ class CdcEventTable(Base):
 class StableTokenSupplyHistoryTable(Base):
     __tablename__ = 'StableTokenSupplyHistory'
     block_number = Column(Integer, primary_key=True, nullable=False)
-    supply = Column(Integer, nullable=False)
+    supply = Column(BigInteger, nullable=False)
 
 
 class EventOpenCdcTable(Base):
@@ -60,8 +60,8 @@ class EventOpenCdcTable(Base):
     cdcId = Column(String(128), nullable=False, index=True)
     owner = Column(String(64), nullable=False)
     secSinceEpoch = Column(Integer, nullable=False)
-    collateralAmount = Column(Integer, nullable=False)
-    stableTokenAmount = Column(Integer, nullable=False)
+    collateralAmount = Column(BigInteger, nullable=False)
+    stableTokenAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 
@@ -73,25 +73,25 @@ class EventLiquidateTable(Base):
     cdcId = Column(String(128), nullable=False, index=True)
     owner = Column(String(64), nullable=False)
     secSinceEpoch = Column(Integer, nullable=False)
-    collateralAmount = Column(Integer, nullable=False)
-    stableTokenAmount = Column(Integer, nullable=False)
+    collateralAmount = Column(BigInteger, nullable=False)
+    stableTokenAmount = Column(BigInteger, nullable=False)
     curPrice = Column(String(64), nullable=False)
     isBadDebt = Column(Boolean, nullable=False)
     liquidator = Column(String(64), nullable=False)
     auctionPrice = Column(String(64), nullable=False)
-    returnAmount = Column(Integer, nullable=False)
-    penaltyAmount = Column(Integer, nullable=False)
+    returnAmount = Column(BigInteger, nullable=False)
+    penaltyAmount = Column(BigInteger, nullable=False)
     isNeedLiquidation = Column(Boolean, nullable=False)
-    stabilityFee = Column(Integer, nullable=False)
-    repayStableTokenAmount = Column(Integer, nullable=False)
-    auctionCollateralAmount = Column(Integer, nullable=False)
+    stabilityFee = Column(BigInteger, nullable=False)
+    repayStableTokenAmount = Column(BigInteger, nullable=False)
+    auctionCollateralAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventAddCollateralTable(Base):
     __tablename__ = 'AddCollateral'
     event_id = Column(Integer, ForeignKey("CdcEvent.event_id"),primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
-    addAmount = Column(Integer, nullable=False)
+    addAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventCloseCdcTable(Base):
@@ -100,9 +100,9 @@ class EventCloseCdcTable(Base):
     cdcId = Column(String(128), nullable=False, index=True)
     owner = Column(String(64),  nullable=False)
     secSinceEpoch = Column(Integer, nullable=False)
-    stabilityFee = Column(Integer, nullable=False)
-    collateralAmount = Column(Integer, nullable=False)
-    stableTokenAmount = Column(Integer, nullable=False)
+    stabilityFee = Column(BigInteger, nullable=False)
+    collateralAmount = Column(BigInteger, nullable=False)
+    stableTokenAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventExpandLoanTable(Base):
@@ -110,9 +110,9 @@ class EventExpandLoanTable(Base):
     event_id = Column(Integer,ForeignKey("CdcEvent.event_id"), primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
     from_address = Column(String(64),  nullable=False)
-    repayFee  = Column(Integer, nullable=False)
-    expandLoanAmount = Column(Integer, nullable=False)
-    realGotAmount = Column(Integer, nullable=False)
+    repayFee  = Column(BigInteger, nullable=False)
+    expandLoanAmount = Column(BigInteger, nullable=False)
+    realGotAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventWidrawCollateralTable(Base):
@@ -120,7 +120,7 @@ class EventWidrawCollateralTable(Base):
     event_id = Column(Integer,ForeignKey("CdcEvent.event_id"), primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
     from_address = Column(String(64),  nullable=False)
-    widrawCollateralAmount  = Column(Integer, nullable=False)
+    widrawCollateralAmount  = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventPayBackTable(Base):
@@ -128,10 +128,10 @@ class EventPayBackTable(Base):
     event_id = Column(Integer,ForeignKey("CdcEvent.event_id"), primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
     from_address = Column(String(64),  nullable=False)
-    fee  = Column(Integer, nullable=False)
-    repayPrincipal = Column(Integer, nullable=False)
-    payBackAmount = Column(Integer, nullable=False)
-    realPayBackAmount = Column(Integer, nullable=False)
+    fee  = Column(BigInteger, nullable=False)
+    repayPrincipal = Column(BigInteger, nullable=False)
+    payBackAmount = Column(BigInteger, nullable=False)
+    realPayBackAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventTransferCdcTable(Base):
@@ -147,7 +147,7 @@ class EventTakeBackCollateralByCdcTable(Base):
     __tablename__ = 'TakeBackCollateralByCdc'
     event_id = Column(Integer,ForeignKey("CdcEvent.event_id"), primary_key=True, nullable=False)
     owner = Column(String(64),  nullable=False)
-    returnAmount = Column(Integer, nullable=False)
+    returnAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 class EventTakeBackCollateralByTokenTable(Base):
@@ -155,7 +155,7 @@ class EventTakeBackCollateralByTokenTable(Base):
     event_id = Column(Integer,ForeignKey("CdcEvent.event_id"), primary_key=True, nullable=False)
     cdcId = Column(String(128), nullable=False, index=True)
     owner = Column(String(64),  nullable=False)
-    returnAmount = Column(Integer, nullable=False)
+    returnAmount = Column(BigInteger, nullable=False)
     block_number = Column(Integer, nullable=False)
 
 
@@ -479,6 +479,13 @@ class HdaoEventsCollector:
                     end_block_num=0,
                     end_block_id=" "
                 ))
+
+                self.session.query(StableTokenSupplyHistoryTable).delete()
+                e = StableTokenSupplyHistoryTable(
+                    supply=0,
+                    block_number=self.registered_block_num)
+                self.session.add(e)
+
             else:
                 start_block = cdc_chain.end_block_num + 1
 
@@ -508,11 +515,12 @@ class HdaoEventsCollector:
                     total_events__count = total_events__count + event_count
                 temp_start_block_num = temp_end_block_num
                 start_event_id = start_event_id + event_count
+                print("--------total_events__count:" + str(total_events__count))
         except BaseException as e:
             print(e)
         finally:
             self.session.close()
-        print("--------total_events__count:"+str(total_events__count))
+
 
 
 if __name__ == "__main__":
