@@ -343,6 +343,8 @@ def closeAllUsersCdcs(usersNum,account_name_prefix,filepath,mainAccount):
             result = cdcUser.get_cdc(trxid)
             if (result is not None):
                 cdcinfo = json.loads(result)
+                if(len(cdcinfo)==0):
+                    continue
                 collateralAmount = int(cdcinfo['collateralAmount'])
                 stabilityFee = int(cdcinfo['stabilityFee'])
                 stableTokenAmount = int(cdcinfo['stableTokenAmount'])
@@ -414,6 +416,8 @@ def closeAllUsersCdcs(usersNum,account_name_prefix,filepath,mainAccount):
         result = cdcAdmin.get_cdc(cdc['trxid'])
         if result is not None:
             cdcinfo = json.loads(result)
+            if(len(cdcinfo)==0):
+                continue
             stableTokenAmount = int(cdcinfo['stableTokenAmount'])
             totalCdcStableTokenAmount = totalCdcStableTokenAmount + stableTokenAmount
 
@@ -576,13 +580,14 @@ def testover(usersNum,cdc_address, mainAccount,loopnum,filepath,account_name_pre
 
     cdcAdmin.set_annual_stability_fee("15")
 
-    with open(filepath, 'r') as f:
-        try:
+    try:
+        with open(filepath, 'r') as f:
             global cdcs
             cdcs = json.load(f)
-        except BaseException as e:
-            print(e)
-    f.close()
+    except BaseException as e:
+        print(e)
+    finally:
+        f.close()
 
     openCdc(cdc_admin,cdcAdmin,collateralAsset,price,liquidationRatio,filepath,True)
 
@@ -616,11 +621,12 @@ def testover(usersNum,cdc_address, mainAccount,loopnum,filepath,account_name_pre
 
         ##########################
         # liquidate
+        '''
         if(i%4 == 3):
             time.sleep(5)
             count = checkAndLiquidate(usersnum,account_name_prefix,stableTokenAddr,filepath,cdcUsers,cdc_admin)
             liquidateCount = liquidateCount + count
-
+        '''
 
         # feed price #######################################################################
         if(opRes):
@@ -638,7 +644,7 @@ def testover(usersNum,cdc_address, mainAccount,loopnum,filepath,account_name_pre
             r = priceFeeder.feed_price(newpricestr)
             if (r is not None):
                 print("feed new price:" + newpricestr)
-            #time.sleep(5)
+            time.sleep(5)
 
     cdcAdmin.set_annual_stability_fee("0.15")
 
@@ -674,13 +680,13 @@ if __name__ == '__main__':
     print("start time: ", time1)
 
     usersnum = 20
-    loopnum = 800
+    loopnum = 8000
     filepath = "cdcs.json"
     account_name_prefix = "at"
     try:
         closeAllCdcsAtEnd = True
-        testover(usersnum,cdc_address,mainAccount,loopnum,filepath,account_name_prefix,closeAllCdcsAtEnd)
-        #closeAllUsersCdcs(usersnum,account_name_prefix,filepath,mainAccount)
+        #testover(usersnum,cdc_address,mainAccount,loopnum,filepath,account_name_prefix,closeAllCdcsAtEnd)
+        closeAllUsersCdcs(usersnum,account_name_prefix,filepath,mainAccount)
         print("test over ok")
     except RuntimeError as e:
         closeAllUsersCdcs(usersnum, account_name_prefix, filepath, mainAccount)

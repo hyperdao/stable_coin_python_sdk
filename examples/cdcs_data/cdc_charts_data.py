@@ -14,7 +14,6 @@ from sqlalchemy import func
 from sqlalchemy import and_
 import json
 
-
 import logging
 import datetime
 from sqlalchemy.ext.declarative import declarative_base
@@ -29,10 +28,10 @@ from sqlalchemy.pool import SingletonThreadPool
 class Cdc_Charts_Data:
     def __init__(self,wallet_rpc_url,sqlite_db_path):
         self.walletApi = HXWalletApi(name='events', rpc_url=wallet_rpc_url)
-        Base = declarative_base()
+        #Base = declarative_base()
         engine = create_engine(sqlite_db_path, echo=True, poolclass=SingletonThreadPool,
                                connect_args={'check_same_thread': False})
-        Base.metadata.create_all(engine)
+        #Base.metadata.create_all(engine)
         self.Session = sessionmaker(bind=engine)
 
 
@@ -127,7 +126,6 @@ class Cdc_Charts_Data:
             return (0,0)
         finally:
             session.close()
-
 
     def get_cdc_count_by_tokenAmount_data(self,low,hign=None):
         session = self.Session()
@@ -234,6 +232,7 @@ class Cdc_Charts_Data:
         price = self.walletApi.rpc_request('invoke_contract_offline', [account, priceFeederAddr, "getPrice", ""])
         rate =  sum_collateral*float(price)/sum_stableToken
         return rate
+
 
 
 if __name__ == "__main__":

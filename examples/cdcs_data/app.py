@@ -125,6 +125,15 @@ def get_chart_tab_page(interval):
     tab.add(get_cdc_count_pie(),"cdc count pie")
     return tab
 
+@app.route("/cdc_count_pie")
+def index_cdc_count_pie():
+    r = get_cdc_count_pie()
+    return render_template('index.html',myechart=r.render_embed())
+
+@app.route("/supply_line")
+def index_supply_line():
+    r = get_supply_line()
+    return render_template('index.html',myechart=r.render_embed())
 
 @app.route("/")
 def index():
@@ -133,18 +142,5 @@ def index():
 
 
 
-@app.route("/cdc_count_pie")
-def index_cdc_count_pie():
-    r = get_cdc_count_pie()
-    return render_template('index.html',myechart=r.render_embed())
-
-
-@app.route("/supply_line")
-def index_supply_line():
-    r = get_supply_line()
-    return render_template('index.html',myechart=r.render_embed())
-
-
-
 if __name__ == "__main__":
-    app.run(host = "127.0.0.1",port = 5000,debug=True)
+    app.run(host = "127.0.0.1",port = 5000)
