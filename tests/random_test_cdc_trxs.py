@@ -3,6 +3,7 @@ import random
 import time
 import copy
 import datetime
+import pathlib
 
 from hdao.hx_wallet_api import *
 from hdao.utils import *
@@ -90,7 +91,6 @@ def openCdc(user,cdcUser,collateralAsset,price,liquidationRatio,filepath,isMax=F
                 print("open cdc txid:"+trxid+ " user:"+user + " collateralAmount:"+str(collateralAmount)+" randStableCoinAmount:"+str(randStableCoinAmount))
                 with open(filepath, 'w') as f:
                     json.dump(cdcs,f)
-                f.close()
             else:
                 print("open cdc fail !!!   user:" + user + " collateralAmount:" + str(
                     collateralAmount) + " randStableCoinAmount:" + str(randStableCoinAmount))
@@ -221,7 +221,6 @@ def close_cdc(user,cdcUser,tokenAddr,fromuser,filepath):
                     del cdcs[user]
                     with open(filepath, 'w') as f:
                         json.dump(cdcs, f)
-                    f.close()
                 else:
                     print("close_cdc fail !!! txid:" + trxid + " user:" + user + " totalNeedPayAmount:" + str(
                         totalNeedPayAmount))
@@ -277,7 +276,6 @@ def checkAndLiquidate(usersNum,account_name_prefix,tokenAddr,filepath,cdcUsers,f
                             del cdcs[user]
                             with open(filepath, 'w') as f:
                                 json.dump(cdcs, f)
-                            f.close()
                             #time.sleep(5)
                         else:
                             print(
@@ -289,12 +287,11 @@ def checkAndLiquidate(usersNum,account_name_prefix,tokenAddr,filepath,cdcUsers,f
 def closeAllUsersCdcs(usersNum,account_name_prefix,filepath,mainAccount):
     global cdcs
     if(len(cdcs) == 0):
-        with open(filepath, 'r') as load_f:
-            try:
+        try:
+            with open(filepath, 'r') as load_f:
                 cdcs = json.load(load_f)
-            except BaseException as e:
-                print(e)
-        load_f.close()
+        except BaseException as e:
+            logging.error(str(e))
 
     cdcUsers = []
     if(len(cdcs)==0):
@@ -371,7 +368,6 @@ def closeAllUsersCdcs(usersNum,account_name_prefix,filepath,mainAccount):
                             del cdcs[user]
                             with open(filepath, 'w') as f:
                                 json.dump(cdcs, f)
-                            f.close()
                         else:
                             print("close_cdc fail !!! txid:" + trxid + " user:" + user + " totalNeedPayAmount:" + str(
                                 totalNeedPayAmount) + " stableTokenAmount:" + str(stableTokenAmount))
@@ -397,7 +393,6 @@ def closeAllUsersCdcs(usersNum,account_name_prefix,filepath,mainAccount):
                 del cdcs[cdc_admin]
                 with open(filepath, 'w') as f:
                     json.dump(cdcs, f)
-                f.close()
             else:
                 print("close_cdc fail !!! txid:" + trxid + " user:" + cdc_admin + " totalNeedPayAmount:" + str(
                     totalNeedPayAmount) + " stableTokenAmount:" + str(stableTokenAmount))
@@ -580,14 +575,18 @@ def testover(usersNum,cdc_address, mainAccount,loopnum,filepath,account_name_pre
 
     cdcAdmin.set_annual_stability_fee("15")
 
-    try:
+    p = pathlib.Path(filepath)
+    if(not p.is_file()):
+        fd = open(filepath, mode="w", encoding="utf-8")
+        fd.close()
+    else:
         with open(filepath, 'r') as f:
             global cdcs
-            cdcs = json.load(f)
-    except BaseException as e:
-        print(e)
-    finally:
-        f.close()
+            try:
+                cdcs = json.load(f)
+            except BaseException as e:
+                logging.error(str(e))
+
 
     openCdc(cdc_admin,cdcAdmin,collateralAsset,price,liquidationRatio,filepath,True)
 
@@ -680,13 +679,13 @@ if __name__ == '__main__':
     print("start time: ", time1)
 
     usersnum = 20
-    loopnum = 8000
+    loopnum = 800
     filepath = "cdcs.json"
     account_name_prefix = "at"
     try:
         closeAllCdcsAtEnd = True
-        #testover(usersnum,cdc_address,mainAccount,loopnum,filepath,account_name_prefix,closeAllCdcsAtEnd)
-        closeAllUsersCdcs(usersnum,account_name_prefix,filepath,mainAccount)
+        testover(usersnum,cdc_address,mainAccount,loopnum,filepath,account_name_prefix,closeAllCdcsAtEnd)
+        #closeAllUsersCdcs(usersnum,account_name_prefix,filepath,mainAccount)
         print("test over ok")
     except RuntimeError as e:
         closeAllUsersCdcs(usersnum, account_name_prefix, filepath, mainAccount)
@@ -698,7 +697,7 @@ if __name__ == '__main__':
         with open(filepath, 'w') as f:
             #print(cdcs)
             json.dump(cdcs, f)
-        f.close()
+
         time2 = datetime.datetime.now()
         print("end time: ", time2)
 
