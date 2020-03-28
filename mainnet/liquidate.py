@@ -71,3 +71,14 @@ class Cdc_Liquidate_Robot(threading.Thread):
                                 repayStableTokenAmount))
                     else:
                         balance = balance - repayStableTokenAmount
+     def run(self):
+        try:
+            session = self.Session()
+            while (True):
+                self.scan_liquidate(session)
+                time.sleep(5)
+        except BaseException as e:
+            logging.error(str(e))
+            traceback.print_exc()
+        finally:
+            session.close()
