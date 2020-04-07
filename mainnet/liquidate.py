@@ -4,6 +4,7 @@ import time
 import threading
 import traceback
 from hdao.hx_wallet_api import HXWalletApi
+from hdao.cdc_data_table_structure import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
@@ -71,7 +72,8 @@ class Cdc_Liquidate_Robot(threading.Thread):
                                 repayStableTokenAmount))
                     else:
                         balance = balance - repayStableTokenAmount
-     def run(self):
+
+    def run(self):
         try:
             session = self.Session()
             while (True):
