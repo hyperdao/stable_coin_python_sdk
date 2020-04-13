@@ -12,14 +12,12 @@ from hdao.hdao_cdc_op import CDCOperation
 
 
 class Cdc_Liquidate_Robot(threading.Thread):
-    def __init__(self,wallet_rpc_url,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision):
+    def __init__(self,wallet_api,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision,session):
         threading.Thread.__init__(self)
-        self.wallet_api = HXWalletApi(name='events', rpc_url=wallet_rpc_url)
+        self.wallet_api = wallet_api
         #Base = declarative_base()
-        engine = create_engine(db_path, echo=True, poolclass=SingletonThreadPool,
-                               connect_args={'check_same_thread': False})
         #Base.metadata.create_all(engine)
-        self.Session = sessionmaker(bind=engine)
+        self.Session = session
         self.account = account
         self.cdc_contract_address = cdc_contract_address
         self.stableTokenPrecision = stableTokenPrecision
@@ -75,8 +73,8 @@ class Cdc_Liquidate_Robot(threading.Thread):
 
     def run(self):
         try:
-            session = self.Session()
-            while (True):
+            session = self.Session
+            while True:
                 self.scan_liquidate(session)
                 time.sleep(5)
         except BaseException as e:
