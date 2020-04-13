@@ -264,7 +264,8 @@ class PriceFeedingRobot:
         self.logger.info("restart robots")
         self.stop()
         self.start()
-
+    def run(self):
+        self.start()
     def is_Unnormal(self):
         for robot in self.robots:
             if(not robot.is_alive()):
