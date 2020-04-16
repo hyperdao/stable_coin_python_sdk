@@ -14,27 +14,27 @@ class hdaoThread (threading.Thread):
         self.name = name
         self.func = func
     def run(self):
-      func.run()
+      self.func.run()
 
 if __name__ == '__main__':
     '''need to launch all program 
     '''
     session = sessionmaker(engine)
-    api = HXWalletApi(rpc_url=HX_TESTNET_RPC)
-    collector = HdaoEventsCollector('da', CDC_CONTRACT_ID, api)
-    feeder = PriceFeedingRobot("robot_config.json")
-    liquidator = Cdc_Liquidate_Robot(api, SQLITE_CDS_DATA, CDC_CONTRACT_ID, PRICE_FEEDER["account"], STABLETOKENPRECISION,
-                        COLLECTEALPRECISION,Session)
+    api = HXWalletApi("HDao",rpc_url=HX_TESTNET_RPC)
+    collector = HDaoEventCollectorFactory('robot_config.json',api,Session)
+    #feeder = PriceFeedingRobot("robot_config.json")
+    #liquidator = Cdc_Liquidate_Robot(api, SQLITE_CDS_DATA, CDC_CONTRACT_ID, PRICE_FEEDER["account"], STABLETOKENPRECISION,
+    #                    COLLECTEALPRECISION,Session)
 
 
     t1 = hdaoThread("collector",collector)
-    t2 = hdaoThread("feeder",feeder)
-    t3 = hdaoThread("liquidator",liquidator)
+    #t2 = hdaoThread("feeder",feeder)
+    #t3 = hdaoThread("liquidator",liquidator)
     t1.start()
-    t2.start()
-    t3.start()
+    #t2.start()
+    #t3.start()
 
     t1.join()
-    t2.join()
-    t3.join()
+    #t2.join()
+    #t3.join()
 
