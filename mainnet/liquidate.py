@@ -87,7 +87,7 @@ class Cdc_Liquidate():
     def stop(self):
         self.is_running = False
 
-class HDaoEventCollectorFactory(threading.Thread) :
+class HDaoLiquidateFactor(threading.Thread) :
     '''need to be changed to a '''
     def loadConfigFile(self):
         with open(self.robot_config_filepath, 'r') as f:
