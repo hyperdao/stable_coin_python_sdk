@@ -5,7 +5,8 @@ import time
 import traceback
 from sqlalchemy import func
 from mainnet.config import *
-
+import  threading
+import  sys
 #engine = create_engine('sqlite:///cdcs.db', echo=True, poolclass=SingletonThreadPool,
 #                       connect_args={'check_same_thread': False})
 
@@ -403,6 +404,10 @@ class HdaoEventsCollector:
         if(need_close_session):
             session.close()
         logging.info("delete_all cdc data down!!!")
+    def run(self):
+        while True:
+            self.collect_event()
+            time.sleep(1)
 
 '''
 if __name__ == "__main__":
@@ -423,4 +428,49 @@ if __name__ == "__main__":
         time.sleep(5)
 '''
 
+class HDaoEventCollectorFactory(threading.Thread) :
+    '''need to be changed to a '''
+    def loadConfigFile(self):
+        with open(self.robot_config_filepath, 'r') as f:
+            try:
+                self.jsonconfigs = json.load(f)
+            except BaseException as e:
+                self.logger.error(e)
+                sys.exit(1)
+            finally:
+                f.close()
+
+    def __init__(self,robot_config_filepath,api,session):
+        threading.Thread.__init__(self)
+        self.session = session
+        self.api = api
+        self.robots = []
+        self.config_path = robot_config_filepath
+        self.jsonconfigs = {}
+    def stop(self):
+        if len(self.robots) <=0 :
+            print("there is no need to stop")
+
+        for robot in self.robots :
+            robot.stop()
+    def run(self):
+        if len(self.robots ) > 0 :
+            print("error, robots has been started")
+        try:
+            self.loadConfigFile()
+            cdc_event_info = self.jsonconfigs["CDC_EVENT_INFO"]
+            global_info = self.jsonconfigs["global_info"]
+            for i in  range(0,len(cdc_event_info)) :
+                robot = HdaoEventsCollector(self.api,global_info["ACCOUNT"],
+                                       global_info["STABLEPRECISION"],global_info["COLLECTEALPRECISION"],self.session)
+                self.robots.append(robot)
+        except:
+            print("xxxx")
+            sys.exit(1)
+
+        try:
+            for robot in self.robots :
+                robot.run()
+        except:
+            pass
 
