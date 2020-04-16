@@ -9,14 +9,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 from hdao.hdao_cdc_op import CDCOperation
+import  sys
 
-
-class Cdc_Liquidate_Robot(threading.Thread):
-    def __init__(self,wallet_api,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision,session):
-        threading.Thread.__init__(self)
+class Cdc_Liquidate():
+    def __init__(self,wallet_api,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision,session,symbol):
         self.wallet_api = wallet_api
+        self.symbol = symbol
         #Base = declarative_base()
         #Base.metadata.create_all(engine)
+        self.is_running = False
         self.Session = session
         self.account = account
         self.cdc_contract_address = cdc_contract_address
@@ -74,7 +75,8 @@ class Cdc_Liquidate_Robot(threading.Thread):
     def run(self):
         try:
             session = self.Session
-            while True:
+            self.is_running = True
+            while self.is_running == True:
                 self.scan_liquidate(session)
                 time.sleep(5)
         except BaseException as e:
@@ -82,3 +84,53 @@ class Cdc_Liquidate_Robot(threading.Thread):
             traceback.print_exc()
         finally:
             session.close()
+    def stop(self):
+        self.is_running = False
+
+class HDaoEventCollectorFactory(threading.Thread) :
+    '''need to be changed to a '''
+    def loadConfigFile(self):
+        with open(self.robot_config_filepath, 'r') as f:
+            try:
+                self.jsonconfigs = json.load(f)
+            except BaseException as e:
+                self.logger.error(e)
+                sys.exit(1)
+            finally:
+                f.close()
+
+    def __init__(self,robot_config_filepath,api,session):
+        threading.Thread.__init__(self)
+        self.session = session
+        self.api = api
+        self.robots = []
+        self.config_path = robot_config_filepath
+        self.jsonconfigs = {}
+    def stop(self):
+        if len(self.robots) <=0 :
+            print("there is no need to stop")
+
+        for robot in self.robots :
+            robot.stop()
+    def run(self):
+        if len(self.robots ) > 0 :
+            print("error, robots has been started")
+        try:
+            self.loadConfigFile()
+            liquidate_info = self.jsonconfigs["Liquidate_info"]
+            global_info = self.jsonconfigs["global_info"]
+            for i in  range(0,len(liquidate_info)) :
+                robot = Cdc_Liquidate(self.api,global_info["SQLDB"],global_info["CDC_ID"],global_info["ACCOUNT"],
+                                       global_info["STABLEPRECISION"],global_info["COLLECTEALPRECISION"],self.session)
+                self.robots.append(robot)
+        except:
+            print("xxxx")
+            sys.exit(1)
+
+        try:
+            for robot in self.robots :
+                robot.run()
+        except:
+            pass
+
+
