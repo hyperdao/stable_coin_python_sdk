@@ -1,4 +1,15 @@
 {
+	"cdc_contract_info": {
+		"btc": {
+			"COLLECTEALPRECISION": 100000000,
+			"CDC_CONTRACT_ID": "xxxx"
+		}
+	},
+	"global_info": {
+		"SQLDB": "sqlite:///../cdcs_data/cdcs.db",
+		"STABLEPRECISION": 100000000,
+		"ACCOUNT": "xxxx"
+	},
 	"exchangeWebSitesInfo": {
 		"btcusdt": {
 			"zb": {
