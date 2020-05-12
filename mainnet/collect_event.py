@@ -15,7 +15,7 @@ import  sys
 ####################################################################
 class HdaoEventsCollector:
 
-    def __init__(self, account, contract, wallet_api,batchGetNum=None):
+    def __init__(self, account, contract, wallet_api,session,batchGetNum=None):
         self.account = account
         self.contract = contract
         self.walletApi = wallet_api
@@ -431,11 +431,11 @@ if __name__ == "__main__":
 class HDaoEventCollectorFactory(threading.Thread) :
     '''need to be changed to a '''
     def loadConfigFile(self):
-        with open(self.robot_config_filepath, 'r') as f:
+        with open(self.config_path, 'r') as f:
             try:
                 self.jsonconfigs = json.load(f)
             except BaseException as e:
-                self.logger.error(e)
+                #self.logger.error(e)
                 sys.exit(1)
             finally:
                 f.close()
@@ -458,11 +458,11 @@ class HDaoEventCollectorFactory(threading.Thread) :
             print("error, robots has been started")
         try:
             self.loadConfigFile()
-            cdc_event_info = self.jsonconfigs["CDC_EVENT_INFO"]
+            cdc_event_info = self.jsonconfigs["cdc_contract_info"]
             global_info = self.jsonconfigs["global_info"]
-            for i in  range(0,len(cdc_event_info)) :
+            for k,v in  cdc_event_info.items():
                 robot = HdaoEventsCollector(self.api,global_info["ACCOUNT"],
-                                       global_info["STABLEPRECISION"],global_info["COLLECTEALPRECISION"],self.session)
+                                       global_info["STABLEPRECISION"],v["CDC_CONTRACT_ID"])
                 self.robots.append(robot)
         except:
             print("xxxx")
