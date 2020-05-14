@@ -1,6 +1,6 @@
 # encoding: utf-8
 import decimal
-
+from hdao.hx_wallet_api import HXWalletApi
 class PriceFeeder:
     def __init__(self, account, contract, wallet_api):
         self.account = account
@@ -48,4 +48,8 @@ class PriceFeeder:
 
 
 if __name__ == "__main__":
-    pass
+    api = HXWalletApi("HDao", rpc_url="http://127.0.0.1:9089/")
+    feeder = PriceFeeder("lepus","HXCTPssTWYEK5oYvD1L9XgAsPLqTiPnnCKsH",api)
+    r = feeder.init_config("BTC","HXCapbR3MJhgG8byC87WrTGtCPjgArocUWjC","10000.12","0.11")
+    print(r)
+
