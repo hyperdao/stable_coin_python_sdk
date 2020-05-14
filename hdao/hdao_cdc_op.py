@@ -1,6 +1,6 @@
 import json
 import decimal
-from .utils import convertCoinWithPrecision
+from hdao.utils import convertCoinWithPrecision
 
 class CDCOperation:
     collateralPrecision = {
@@ -9,20 +9,21 @@ class CDCOperation:
         'HX': 100000
     }
 
-    def __init__(self, account, contract, wallet_api):
+    def __init__(self, account, contract, wallet_api,asset):
         self.account = account
         self.contract = contract
         self.wallet_api = wallet_api
-        self.asset = ""
+        self.asset = asset
         self.precision = 100000000
         info = self.get_contract_info()
         info = json.loads(info)
-        if info is not None or (info.has_key('state') and info['state'] != "NOT_INITED"):
-            self.asset = info['collateralAsset']
-            self.precision = CDCOperation.collateralPrecision[self.asset]
+        #if info is not None or (info.has_key('state') and info['state'] != "NOT_INITED"):
+        #    self.asset = info['collateralAsset']
+        #    print (self.asset)
+        #    self.precision = CDCOperation.collateralPrecision[self.asset]
     
     # online APIs
-    def init_config(self, collateralAsset, collateralizationRatio,\
+    def init_config(self, collateralAsset,\
             annualStabilityFee, liquidationRatio, liquidationPenalty,\
             liquidationDiscount, priceFeederAddr, stableCoinAddr, proxyAddr):
         return self.wallet_api.rpc_request('invoke_contract',\
@@ -34,7 +35,6 @@ class CDCOperation:
                 'init_config',
                 ",".join([
                     collateralAsset,
-                    collateralizationRatio,
                     annualStabilityFee,
                     liquidationRatio,
                     liquidationPenalty,
@@ -182,7 +182,7 @@ class CDCOperation:
 
 if __name__ == "__main__":
     from hx_wallet_api import HXWalletApi
-    api = HXWalletApi(name="TestHdaoEvents", rpc_url='http://192.168.1.121:30088/')
-    cdcOp = CDCOperation('da', 'HXCSSGDHqaJDLto13BSZpAbrZoJf4RrGCtks', api)
-    info = cdcOp.close_cdc('a9f361bac02cec7cf7361f4e4c00b7dc76841544')
-    print(info)
+    api = HXWalletApi(name="TestHdaoEvents", rpc_url='http://127.0.0.1:9089/')
+    cdcOp = CDCOperation('lepus', 'HXCQz7d5X3usujLoPaZ1NT3JNUJstByuuxmo', api,"BTC")
+    r = cdcOp.init_config("BTC","0.1","1.25","0.13","0.03","HXCTPssTWYEK5oYvD1L9XgAsPLqTiPnnCKsH","HXCapbR3MJhgG8byC87WrTGtCPjgArocUWjC","HXCX47BJ5vt2DCDJnUUGvMJEeqzx7MwtEiRo")
+    print(r)
