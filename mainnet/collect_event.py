@@ -461,8 +461,7 @@ class HDaoEventCollectorFactory(threading.Thread) :
             cdc_event_info = self.jsonconfigs["cdc_contract_info"]
             global_info = self.jsonconfigs["global_info"]
             for k,v in  cdc_event_info.items():
-                robot = HdaoEventsCollector(self.api,global_info["ACCOUNT"],
-                                       global_info["STABLEPRECISION"],v["CDC_CONTRACT_ID"])
+                robot = HdaoEventsCollector(global_info["ACCOUNT"],v["CDC_CONTRACT_ID"],self.api,self.session)
                 self.robots.append(robot)
         except:
             print("xxxx")
