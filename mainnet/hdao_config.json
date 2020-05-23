@@ -1,14 +1,14 @@
 {
 	"cdc_contract_info": {
-		"btc": {
+		"HX": {
 			"COLLECTEALPRECISION": 100000000,
-			"CDC_CONTRACT_ID": "xxxx"
+			"CDC_CONTRACT_ID": "HXCVAqxumEcyu5JL5LJ495xB4kKR6TrodCgA"
 		}
 	},
 	"global_info": {
 		"SQLDB": "sqlite:///../cdcs_data/cdcs.db",
 		"STABLEPRECISION": 100000000,
-		"ACCOUNT": "xxxx"
+		"ACCOUNT": "lepus"
 	},
 	"exchangeWebSitesInfo": {
 		"btcusdt": {
@@ -66,47 +66,22 @@
         "hxusdt": {
           "zb": {
             "name": "zb",
-            "url": "http://api.zb.plus/data/v1/ticker?market=hx_usdt",
+            "url": "http://api.zb.live/data/v1/ticker?market=hx_qc",
             "accessPriceKeys": [
               "ticker",
               "buy"
             ],
-            "muti_factor": 1000
+            "muti_factor": 1
           }
         }
 	},
-	"feedingContractsInfo": [{
-			"symbolPair": "btcusdt",
-			"wallet_api_url": "http://121.0.0.1:30088/",
-			"priceFeeder_contract_address": "HXCTkW3MD8te4uoyndoRvtds7HoFvhhH2EWr",
-			"feeders": [{
-				"account": "senator0",
-				"websites": ["feixiaohao", "zb"]
-			}, {
-				"account": "april",
-				"websites": ["zb","feixiaohao"]
-			}],
-			"interval": 4
-		},
-		{
-			"symbolPair": "ethusdt",
-			"wallet_api_url": "http://192.168.1.121:30088/",
-			"priceFeeder_contract_address": "HXCRMLXnJjFvD1hXoHtWDxUkJvptxEgocRjx",
-			"feeders": [{
-				"account": "senator0",
-				"websites": ["feixiaohao", "zb"]
-			}, {
-				"account": "april",
-				"websites": ["zb", "feixiaohao"]
-			}],
-			"interval": 4
-		},
+	"feedingContractsInfo": [
         {
 			"symbolPair": "hxusdt",
-			"wallet_api_url": "http://192.168.1.121:30088/",
-			"priceFeeder_contract_address": "HXCGba6bUaGeBtUQRGpHUePHVXzF1ygMAxR1",
+			"wallet_api_url": "http://127.0.0.1:9089",
+			"priceFeeder_contract_address": "HXCWiS53YK8uq1LkW9RAgkiWTU1SydkELVvM",
 			"feeders": [{
-				"account": "senator0",
+				"account": "lepus",
 				"websites": ["zb"]
 			}],
 			"interval": 4
