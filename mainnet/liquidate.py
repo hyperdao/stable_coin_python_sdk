@@ -23,7 +23,8 @@ class Cdc_Liquidate():
         self.cdc_contract_address = cdc_contract_address
         self.stableTokenPrecision = stableTokenPrecision
         self.collateralPrecision = collateralPrecision
-        self.liquidator = CDCOperation(account, cdc_contract_address, self.wallet_api)
+        self.liquidator = CDCOperation(account, cdc_contract_address, self.wallet_api,self.symbol)
+
         account_addr = self.wallet_api.rpc_request("get_account_addr",[account])
         if(account_addr is None):
             raise RuntimeError("address is None, account:"+str(account))
@@ -35,17 +36,17 @@ class Cdc_Liquidate():
         self.priceFeederAddr = cdc_contract_info["priceFeederAddr"]
 
     def scan_liquidate(self, session):
-        r = session.execute('select * from cdcs where state=1')
+        r = session.execute("select * from cdcs where state=1")
         cdcs = r.fetchall()
         count = len(cdcs)
         if (count <= 0):
+            print("there is nothing ")
             return
 
         balance = int(self.wallet_api.rpc_request('invoke_contract_offline',
                                                   [self.account, self.stableTokenAddr, "balanceOf", self.account_addr]))
         if (balance <= 0):
             raise RuntimeError("balance <= 0")
-            return
 
         for cdc in cdcs:
             c = CdcTable()
@@ -73,8 +74,8 @@ class Cdc_Liquidate():
                         balance = balance - repayStableTokenAmount
 
     def run(self):
+        session = self.Session()
         try:
-            session = self.Session
             self.is_running = True
             while self.is_running == True:
                 self.scan_liquidate(session)
@@ -90,7 +91,7 @@ class Cdc_Liquidate():
 class HDaoLiquidateFactor(threading.Thread) :
     '''need to be changed to a '''
     def loadConfigFile(self):
-        with open(self.robot_config_filepath, 'r') as f:
+        with open(self.config_path, 'r') as f:
             try:
                 self.jsonconfigs = json.load(f)
             except BaseException as e:
@@ -106,6 +107,14 @@ class HDaoLiquidateFactor(threading.Thread) :
         self.robots = []
         self.config_path = robot_config_filepath
         self.jsonconfigs = {}
+        self.logger = logging.getLogger("liquidator_factory.log")
+        self.logger.setLevel(level=logging.INFO)
+        handler = logging.FileHandler("liquidator_factory.log")
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.info("Start print log")
     def stop(self):
         if len(self.robots) <=0 :
             print("there is no need to stop")
@@ -121,7 +130,7 @@ class HDaoLiquidateFactor(threading.Thread) :
             global_info = self.jsonconfigs["global_info"]
             for k, v in liquidate_info.items():
                 robot = Cdc_Liquidate(self.api,global_info["SQLDB"],v["CDC_CONTRACT_ID"],global_info["ACCOUNT"],
-                                       global_info["STABLEPRECISION"],v["COLLECTEALPRECISION"],self.session)
+                                       global_info["STABLEPRECISION"],v["COLLECTEALPRECISION"],self.session,k)
                 self.robots.append(robot)
         except:
             print("xxxx")
