@@ -12,7 +12,7 @@ from hdao.hdao_cdc_op import CDCOperation
 import  sys
 
 class Cdc_Liquidate():
-    def __init__(self,wallet_api,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision,session,symbol):
+    def __init__(self,wallet_api,db_path,cdc_contract_address, account,stableTokenPrecision,collateralPrecision,session,symbol,logger):
         self.wallet_api = wallet_api
         self.symbol = symbol
         #Base = declarative_base()
@@ -24,6 +24,7 @@ class Cdc_Liquidate():
         self.stableTokenPrecision = stableTokenPrecision
         self.collateralPrecision = collateralPrecision
         self.liquidator = CDCOperation(account, cdc_contract_address, self.wallet_api,self.symbol)
+        self.logger = logger
 
         account_addr = self.wallet_api.rpc_request("get_account_addr",[account])
         if(account_addr is None):
@@ -130,7 +131,7 @@ class HDaoLiquidateFactor(threading.Thread) :
             global_info = self.jsonconfigs["global_info"]
             for k, v in liquidate_info.items():
                 robot = Cdc_Liquidate(self.api,global_info["SQLDB"],v["CDC_CONTRACT_ID"],global_info["ACCOUNT"],
-                                       global_info["STABLEPRECISION"],v["COLLECTEALPRECISION"],self.session,k)
+                                       global_info["STABLEPRECISION"],v["COLLECTEALPRECISION"],self.session,k,self.logger)
                 self.robots.append(robot)
         except:
             print("xxxx")
