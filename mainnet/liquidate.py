@@ -41,7 +41,7 @@ class Cdc_Liquidate():
         cdcs = r.fetchall()
         count = len(cdcs)
         if (count <= 0):
-            print("there is nothing ")
+            self.logger.info("no need to start.")
             return
 
         balance = int(self.wallet_api.rpc_request('invoke_contract_offline',
@@ -61,14 +61,14 @@ class Cdc_Liquidate():
                 repayStableTokenAmount = int(info['repayStableTokenAmount'])
                 auctionCollateralAmount = int(info['auctionCollateralAmount'])
                 if (balance < repayStableTokenAmount):
-                    logging.error("not enough balance ,balance:" + str(balance) + " need repayStableTokenAmount:" + str(
+                    self.logger.error("not enough balance ,balance:" + str(balance) + " need repayStableTokenAmount:" + str(
                         repayStableTokenAmount))
                 else:
                     liquidateResult = self.liquidator.liquidate(cdcId,
                                                                 repayStableTokenAmount / self.stableTokenPrecision,
                                                                 auctionCollateralAmount / self.collateralPrecision)
                     if (liquidateResult is None):
-                        logging.error(
+                        self.logger.error(
                             "liquidate fail ; cdcId" + cdcId + "liquidator:" + self.account + " need repayStableTokenAmount:" + str(
                                 repayStableTokenAmount))
                     else:
@@ -118,13 +118,13 @@ class HDaoLiquidateFactor(threading.Thread) :
         self.logger.info("Start print log")
     def stop(self):
         if len(self.robots) <=0 :
-            print("there is no need to stop")
+            self.logger.info("there is no need to stop")
 
         for robot in self.robots :
             robot.stop()
     def run(self):
         if len(self.robots ) > 0 :
-            print("error, robots has been started")
+            self.logger.info("error, robots has been started")
         try:
             self.loadConfigFile()
             liquidate_info = self.jsonconfigs["cdc_contract_info"]
@@ -134,7 +134,6 @@ class HDaoLiquidateFactor(threading.Thread) :
                                        global_info["STABLEPRECISION"],v["COLLECTEALPRECISION"],self.session,k,self.logger)
                 self.robots.append(robot)
         except:
-            print("xxxx")
             sys.exit(1)
 
         try:
