@@ -200,7 +200,7 @@ class ContractPriceFeedingRobot(threading.Thread):
 
 
 #######################################################################################################
-class PriceFeedingRobot:
+class PriceFeedingFactory:
     def loadConfigFile(self):
         with open(self.robot_config_filepath, 'r') as f:
             try:
