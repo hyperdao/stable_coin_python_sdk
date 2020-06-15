@@ -22,19 +22,19 @@ if __name__ == '__main__':
     session = sessionmaker(engine)
     api = HXWalletApi("HDao",rpc_url=HX_TESTNET_RPC)
     collector = HDaoEventCollectorFactory('robot_config.json',api,Session)
-    #feeder = PriceFeedingFactory("robot_config.json")
-    #liquidator = Cdc_Liquidate_Robot(api, SQLITE_CDS_DATA, CDC_CONTRACT_ID, PRICE_FEEDER["account"], STABLETOKENPRECISION,
-    #                    COLLECTEALPRECISION,Session)
+    feeder = PriceFeedingFactory("robot_config.json")
+    liquidator = Cdc_Liquidate_Robot(api, SQLITE_CDS_DATA, CDC_CONTRACT_ID, PRICE_FEEDER["account"], STABLETOKENPRECISION,
+                        COLLECTEALPRECISION,Session)
 
 
     t1 = hdaoThread("collector",collector)
-    #t2 = hdaoThread("feeder",feeder)
-    #t3 = hdaoThread("liquidator",liquidator)
+    t2 = hdaoThread("feeder",feeder)
+    t3 = hdaoThread("liquidator",liquidator)
     t1.start()
-    #t2.start()
-    #t3.start()
+    t2.start()
+    t3.start()
 
     t1.join()
-    #t2.join()
-    #t3.join()
+    t2.join()
+    t3.join()
 
