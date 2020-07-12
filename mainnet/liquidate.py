@@ -64,6 +64,7 @@ class Cdc_Liquidate():
                     self.logger.error("not enough balance ,balance:" + str(balance) + " need repayStableTokenAmount:" + str(
                         repayStableTokenAmount))
                 else:
+                    self.logger.info("need to liguidate the cdcid:"+cdcId)
                     liquidateResult = self.liquidator.liquidate(cdcId,
                                                                 repayStableTokenAmount / self.stableTokenPrecision,
                                                                 auctionCollateralAmount / self.collateralPrecision)
