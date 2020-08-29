@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from  mainnet.collect_event import *
 from mainnet.config import *
 from mainnet.feeder import *

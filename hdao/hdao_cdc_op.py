@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import json
 import decimal
 from hdao.utils import convertCoinWithPrecision

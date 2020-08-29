@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import decimal
 
 def convertCoinWithPrecision(amount, precision=8):
