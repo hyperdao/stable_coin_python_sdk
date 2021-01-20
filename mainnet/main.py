@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
 
     t1 = hdaoThread("collector",collector)
-    t2 = hdaoThread("feeder",feeder)
+    t2 = hdaoThread("feeder", feeder)
     t3 = hdaoThread("liquidator",liquidator)
     t1.start()
     t2.start()

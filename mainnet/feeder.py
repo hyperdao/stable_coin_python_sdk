@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import requests
 import datetime
 import time
 import sys
@@ -51,6 +50,7 @@ class PriceGrab:
 
             if(price is None):
                 return None
+
             if(self.muti_factor!=1):
                 price = (decimal.Decimal(str(price))*self.muti_factor).quantize(decimal.Decimal('0.00000001'))
             return str(price)
@@ -65,7 +65,7 @@ class APriceFeeder:
         self.priceGrabs = []
         for websiteInfo in exchangeWebSites:
             self.priceGrabs.append(PriceGrab(symbolPair,websiteInfo))
-        wallet_api = HXWalletApi(name = 'priceFeeder_service', rpc_url = wallet_api_url)
+        wallet_api = HXWalletApi(name='priceFeeder_service', rpc_url=wallet_api_url)
         self.walletPriceFeederApi = PriceFeeder(accountName, priceFeeder_contract_address, wallet_api)
         account_addr = wallet_api.rpc_request("get_account_addr", [accountName])
         if(account_addr is None):
@@ -212,7 +212,7 @@ class PriceFeedingFactory:
             finally:
                 f.close()
 
-    def __init__(self,robot_config_filepath):
+    def __init__(self, robot_config_filepath):
         self.logger = logging.getLogger("priceFeedingRobot")
         self.robots = []
         self.jsonconfigs = {}
